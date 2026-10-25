@@ -87,7 +87,7 @@ export function issueAlerts(issues: Issue[]): AlertSummary {
     .sort((a, b) => (hoursLeft(a) ?? 0) - (hoursLeft(b) ?? 0));
   const blocked = issues
     .filter((i) => isOpen(i) && BLOCKED_STATUSES.includes(i.status))
-    .sort((a, b) => (b.openDate || "").localeCompare(a.openDate || ""));
+    .sort((a, b) => (a.openDate || "").localeCompare(b.openDate || "")); // du plus ancien au plus récent
   const criticalLate = late.filter((i) => i.priority === "Critical").length;
   const unique = new Set([...late, ...due, ...blocked].map((i) => i.id)).size;
   return { late, due, blocked, criticalLate, unique };
