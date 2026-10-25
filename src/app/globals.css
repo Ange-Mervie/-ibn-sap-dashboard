@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* Défilement fluide vers les ancres (sidebar / navigation) */
+html {
+  scroll-behavior: smooth;
+}
+
+/* =========================================================
+   Bande d'images défilante (le "carrousel" en haut de page)
+   Modifier la durée pour changer la vitesse
+   ========================================================= */
+@keyframes banner-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.banner-track {
+  display: flex;
+  gap: 1rem;
+  width: max-content;
+  animation: banner-scroll 40s linear infinite;
+}
+
+.banner-track:hover {
+  animation-play-state: paused;
+}
+
+/* =========================================================
+   Fond discret de la page (texture très légère)
+   ========================================================= */
+.page-bg {
+  background-color: #f4f4f5;
+  background-image: radial-gradient(#d4d4d8 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* =========================================================
+   Scrollbar discrète pour le tableau
+   ========================================================= */
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: #a1a1aa;
+  border-radius: 3px;
+}
+
+/* =========================================================
+   Graphiques interactifs (type Power BI) : curseur pointeur
+   sur les éléments cliquables (légendes, secteurs, barres)
+   ========================================================= */
+.chart-clickable .recharts-sector,
+.chart-clickable .recharts-bar-rectangle,
+.chart-clickable .recharts-legend-item {
+  cursor: pointer;
+}
+
+.chart-clickable [data-cat] {
+  cursor: pointer;
+}
