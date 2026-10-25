@@ -1,8 +1,8 @@
 // Vérification de la logique SLA : npx tsx scripts/check-sla.ts
 import { loadIssueData } from "../src/lib/loadIssues";
-import { PRIORITIES, daysBetween, isOpen } from "../src/lib/issues";
+import { daysBetween, isOpen } from "../src/lib/issues";
 import {
-  SLA_DAYS, dueDate, hoursLeft, daysLate, isLate, isDueSoon, slaDays, issueAlerts,
+  dueDate, hoursLeft, daysLate, isLate, isDueSoon, slaDays, issueAlerts,
 } from "../src/lib/sla";
 
 function assert(cond: boolean, label: string): void {
