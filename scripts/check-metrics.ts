@@ -1,5 +1,7 @@
 // Vérification des métriques : npx tsx scripts/check-metrics.ts
 import { loadIssueData } from "../src/lib/loadIssues";
+import { isOpen, resolutionDays } from "../src/lib/issues";
+import { slaDays } from "../src/lib/sla";
 import { closedByWeek, avgResolutionByMonth, slaRate, slaRateBy } from "../src/lib/metrics";
 
 function assert(cond: boolean, label: string): void {
@@ -36,5 +38,34 @@ assert(byPrio.reduce((s, g) => s + g.base, 0) === 56, "bases par priorité = 56"
 const byOwner = slaRateBy(issues, "raisedBy");
 assert(byOwner.length >= 5, `au moins 5 responsables (obtenu ${byOwner.length})`);
 assert(byOwner.every((g, i) => i === 0 || byOwner[i - 1].base > g.base || (byOwner[i - 1].base === g.base && byOwner[i - 1].name <= g.name)), "tri base desc");
+
+// --- contrat des labels et de l'ordre (renfort) ---
+assert(weeks.every((w) => w.name === w.from.slice(8, 10) + "/" + w.from.slice(5, 7)), "label semaine = dd/MM du lundi from");
+assert(weeks.every((w) => new Date(w.from + "T00:00:00").getDay() === 1), "from = un lundi");
+assert(months.every((m) => /^\d{2}\/\d{2}$/.test(m.name)), "label mois = mm/yy");
+const mOrder = months.map((m) => (2000 + Number(m.name.slice(3, 5))) * 100 + Number(m.name.slice(0, 2)));
+assert(mOrder.every((v, i) => i === 0 || mOrder[i - 1] <= v), "mois triés chronologiquement (mm/yy avec année)");
+
+// --- clé "module" exercée ---
+const byModule = slaRateBy(issues, "module");
+assert(byModule.length >= 2, `au moins 2 modules (obtenu ${byModule.length})`);
+assert(byModule.reduce((s, g) => s + g.base, 0) === 56, "bases par module = 56");
+
+// --- rate de groupe recalculé indépendamment (priorité Critical) ---
+const critClosed = issues.filter((i) => !isOpen(i) && i.priority === "Critical" && i.openDate && i.closeDate);
+const critGroup = byPrio.find((g) => g.name === "Critical");
+if (critClosed.length > 0 && critGroup) {
+  const onTime = critClosed.filter((i) => (resolutionDays(i) ?? Infinity) <= (slaDays(i) ?? -1)).length;
+  const expected = Math.round((onTime / critClosed.length) * 100);
+  assert(critGroup.base === critClosed.length, `base Critical = ${critClosed.length} (obtenu ${critGroup.base})`);
+  assert(critGroup.rate === expected, `rate Critical = ${expected} % (obtenu ${critGroup.rate})`);
+}
+assert(byModule.every((g) => g.rate >= 0 && g.rate <= 100), "rates de groupe bornés 0-100");
+
+// --- cas à bord ---
+const empty = slaRate([]);
+assert(empty.base === 0 && empty.onTime === 0 && empty.rate === 0, "slaRate([]) → 0/0/0");
+const unknownPrio = slaRate([{ ...critClosed[0], priority: "Inconnue" } as (typeof issues)[number]]);
+assert(unknownPrio.base === 0 && unknownPrio.rate === 0, "priorité inconnue exclue de la base");
 
 console.log("check-metrics: OK");
