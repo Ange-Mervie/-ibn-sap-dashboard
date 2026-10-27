@@ -306,7 +306,7 @@ export default function Dashboard({ data }: { data: IssueData }) {
       {/* Pied de page */}
       <footer className="border-t border-zinc-200 bg-white py-5">
         <p className="text-center text-xs text-zinc-400">
-          IBN SAP Dashboard — Source : {data.source} · {data.issues.length} tickets ·
+          IBN SAP Dashboard , Source : {data.source} · {data.issues.length} tickets ·
           Consultation et analyse uniquement (aucune modification de la source Excel)
         </p>
       </footer>
