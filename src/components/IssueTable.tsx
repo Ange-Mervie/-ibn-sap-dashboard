@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Search, Download, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Issue } from "@/lib/issues";
 import { isOpen, ageDays, resolutionDays, PRIORITIES, issuesToCSV } from "@/lib/issues";
@@ -41,7 +42,8 @@ export default function IssueTable({
     list.sort((a, b) => {
       switch (sort.key) {
         case "id":
-          return (Number(a.id) - Number(b.id)) * dir;
+          // Mélange d'ids Excel ("11") et générés ("SAP-2026-0001") : tri naturel
+          return a.id.localeCompare(b.id, "fr", { numeric: true }) * dir;
         case "openDate":
           return ((a.openDate || "9999").localeCompare(b.openDate || "9999")) * dir;
         case "priority":
@@ -175,7 +177,11 @@ export default function IssueTable({
               const delay = resolutionDays(i);
               return (
                 <tr key={i.id} className={`hover:bg-zinc-50 ${i.priority === "Critical" && isOpen(i) ? "bg-red-50/40" : ""}`}>
-                  <td className="px-3 py-2.5 font-mono text-xs text-zinc-500">{i.id}</td>
+                  <td className="px-3 py-2.5 font-mono text-xs">
+                    <Link href={`/tickets/${encodeURIComponent(i.id)}`} className="text-blue-600 underline-offset-2 hover:underline">
+                      {i.id}
+                    </Link>
+                  </td>
                   <td className="max-w-[260px] truncate px-3 py-2.5" title={i.description}>{i.description}</td>
                   <td className="px-3 py-2.5">
                     <span

@@ -368,6 +368,90 @@ if (barBox && barBox.w > 1) {
   check("PBI Barre de janvier cliquable", false, JSON.stringify(barBox));
 }
 
+// ============================================================
+// ---- 18. CREATION DE TICKET (persistance MySQL) ----
+// ============================================================
+const errMark = consoleErrors.length; // les 400/404 ci-dessous sont volontaires
+const newBtn = await page.evaluate(() =>
+  [...document.querySelectorAll("a")].some((a) => a.textContent.includes("Nouveau ticket"))
+);
+check("Bouton « Nouveau ticket » présent dans l'en-tête", newBtn);
+
+await page.goto("http://localhost:3000/tickets/nouveau", { waitUntil: "networkidle0" });
+const formOk = await page.evaluate(() => Boolean(document.querySelector("[data-ticket-form]")));
+check("Page /tickets/nouveau : formulaire rendu", formOk);
+
+const created = await page.evaluate(async () => {
+  const res = await fetch("/api/tickets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      description: "Ticket créé par le test e2e — formulaire",
+      status: "Not Started",
+      priority: "High",
+      module: "MM_INVENTORY",
+      raisedBy: "E2E TEST",
+      email: "e2e.test@ibngroup.com",
+    }),
+  });
+  const body = await res.json();
+  return { status: res.status, id: body.ticket?.id ?? null, error: body.error ?? null };
+});
+check(
+  "POST /api/tickets → 201 avec id généré",
+  created.status === 201 && /^SAP-\d{4}-\d{4}$/.test(created.id),
+  JSON.stringify(created)
+);
+
+const rejected = await page.evaluate(async () => {
+  const res = await fetch("/api/tickets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ description: "x", email: "pas-un-email" }),
+  });
+  const body = await res.json();
+  return { status: res.status, errors: body.errors ?? [] };
+});
+check(
+  "POST invalide → 400 + erreurs FR",
+  rejected.status === 400 && rejected.errors.length >= 2,
+  JSON.stringify(rejected)
+);
+
+// Persistance : le ticket existe en base après rechargement de la page
+if (created.id) {
+  const persisted = await page.evaluate(async (id) => {
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}`);
+    if (res.status !== 200) return { status: res.status };
+    const body = await res.json();
+    return { status: 200, description: body.ticket?.description ?? "", source: body.ticket?.source ?? "" };
+  }, created.id);
+  check(
+    "Ticket créé persistant en base (GET détail)",
+    persisted.status === 200 && persisted.description.includes("test e2e"),
+    JSON.stringify(persisted)
+  );
+}
+
+// Nettoyage : la suite e2e attend 98 tickets au départ de chaque exécution
+if (created.id) {
+  const cleaned = await page.evaluate(async (id) => {
+    await fetch(`/api/tickets/${encodeURIComponent(id)}`, { method: "DELETE" });
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}`);
+    return res.status;
+  }, created.id);
+  check("Nettoyage du ticket de test (DELETE)", cleaned === 404, `status=${cleaned}`);
+}
+
+// On conserve les vraies erreurs JS, on retire les "Failed to load resource"
+// des réponses 400/404 volontaires de ce bloc.
+const removedHttp = consoleErrors.splice(errMark);
+for (const e of removedHttp) {
+  if (!e.includes("Failed to load resource")) consoleErrors.push(e);
+}
+
+await page.goto("http://localhost:3000/", { waitUntil: "networkidle0" });
+
 // ---- 11. Screenshots desktop + tablette ----
 await page.evaluate(() => window.scrollTo(0, 0));
 await page.screenshot({ path: `${shots}/desktop.png`, fullPage: false });

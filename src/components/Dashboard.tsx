@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle } from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
 import { STATUSES, PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY } from "@/lib/issues";
 import Overview from "./Overview";
@@ -111,9 +112,17 @@ export default function Dashboard({ data }: { data: IssueData }) {
                 {data.period.to.split("-").reverse().join("/")} · Dernière actualisation : {data.lastUpdate}
               </p>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-              {filtered.length} / {data.issues.length} tickets
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                {filtered.length} / {data.issues.length} tickets
+              </span>
+              <Link
+                href="/tickets/nouveau"
+                className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+              >
+                <PlusCircle size={15} /> Nouveau ticket
+              </Link>
+            </div>
           </div>
 
           {/* Filtres globaux combinables (statut, priorité, module, paiement, période) */}
@@ -307,7 +316,7 @@ export default function Dashboard({ data }: { data: IssueData }) {
       <footer className="border-t border-zinc-200 bg-white py-5">
         <p className="text-center text-xs text-zinc-400">
           IBN SAP Dashboard , Source : {data.source} · {data.issues.length} tickets ·
-          Consultation et analyse uniquement (aucune modification de la source Excel)
+          Consultation, création et modification des tickets (la source Excel n&apos;est pas modifiée)
         </p>
       </footer>
     </div>
