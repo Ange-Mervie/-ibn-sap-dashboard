@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { loadIssueData } from "@/lib/loadIssues";
+import { loadIssueDataFromDb } from "@/lib/loadDb";
 import Banner from "@/components/Banner";
 import Dashboard from "@/components/Dashboard";
 
@@ -11,7 +11,7 @@ export default async function HomePage() {
   // Arrête le prerender statique ici — le reste est calculé à la requête
   await connection();
 
-  const data = loadIssueData();
+  const data = await loadIssueDataFromDb();
 
   return (
     <div className="min-h-screen bg-zinc-50">

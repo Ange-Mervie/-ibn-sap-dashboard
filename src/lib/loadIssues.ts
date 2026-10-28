@@ -26,7 +26,15 @@ function toDate(value: unknown): string {
   return "";
 }
 
-export function loadIssueData(): IssueData {
+// Lecture seule du classeur : lignes de tickets + résumé Excel.
+// Utilisé par loadIssueData() (affichage) et scripts/import-excel.ts (base).
+export type ExcelRead = {
+  issues: Issue[];
+  summary: { status: Record<string, number>; priority: Record<string, number>; total: number };
+  mtime: Date;
+};
+
+export function readExcelIssues(): ExcelRead {
   const filePath = path.join(process.cwd(), "data", FILE_NAME);
 
   if (!fs.existsSync(filePath)) {
@@ -73,8 +81,15 @@ export function loadIssueData(): IssueData {
       closeDate: toDate(row[8]),
       payment: clean(row[9]),
       comments: clean(row[10]),
+      source: "excel",
     });
   }
+
+  return { issues, summary, mtime: stat.mtime };
+}
+
+export function loadIssueData(): IssueData {
+  const { issues, summary, mtime: stat } = readExcelIssues();
 
   // --- contrôles qualité (signale, ne masque pas) ---
   const controls: IssueData["controls"] = [];
@@ -169,7 +184,7 @@ export function loadIssueData(): IssueData {
   const lastUpdate = new Intl.DateTimeFormat("fr-FR", {
     dateStyle: "short",
     timeStyle: "short",
-  }).format(stat.mtime);
+  }).format(stat);
 
   return { issues, summary, controls, period, lastUpdate, source: FILE_NAME };
 }

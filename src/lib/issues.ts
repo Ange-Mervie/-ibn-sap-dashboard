@@ -16,6 +16,23 @@ export const STATUSES = [
 
 export const PRIORITIES = ["Critical", "High", "Medium", "Low"] as const;
 
+// Modules SAP de référence (feuille "Key - Do Not Delete" du classeur)
+export const MODULES = [
+  "Bank",
+  "Bank Treso",
+  "FI_AA",
+  "FI_AP",
+  "FI_AR",
+  "FI_FM",
+  "HCM",
+  "MM_CONTRACT",
+  "MM_INVENTORY",
+  "MM_PROCUREMENT",
+  "BLANK",
+  "CLOTURE",
+  "BASIS",
+] as const;
+
 export type Issue = {
   id: string; // Issue No.
   description: string;
@@ -27,6 +44,10 @@ export type Issue = {
   closeDate: string;
   payment: string; // "PAID" | "INVOICED" | "NOT INVOICED" | "" (non renseigné)
   comments: string;
+  // champs de l'application (optionnels : absents de l'Excel historique)
+  email?: string;
+  assignee?: string;
+  source?: string; // "excel" | "form" | "email"
 };
 
 export type IssueData = {
