@@ -17,6 +17,9 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+// Route bloquante : les données dynamiques (params DB) ne peuvent pas être prérendues.
+export const instant = false;
+
 export default async function TicketDetailPage({ params }: PageProps) {
   const { id } = await params;
 
@@ -48,7 +51,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
     const status = String(formData.get("status") ?? "");
     const priority = String(formData.get("priority") ?? "");
     const assignee = String(formData.get("assignee") ?? "").trim();
-    const module = String(formData.get("module") ?? "").trim();
+    const moduleValue = String(formData.get("module") ?? "").trim();
     const description = String(formData.get("description") ?? "").trim();
 
     if (
@@ -90,7 +93,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
       {
         field: "module",
         oldValue: current.module,
-        newValue: module,
+        newValue: moduleValue,
       },
       {
         field: "description",
@@ -106,7 +109,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
           status: status as typeof current.status,
           priority: priority as typeof current.priority,
           assignee,
-          module,
+          module: moduleValue,
           description,
         })
         .where(eq(tickets.id, id));
@@ -210,7 +213,10 @@ export default async function TicketDetailPage({ params }: PageProps) {
           </span>
         </div>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+        <section
+          data-ticket-detail
+          className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6"
+        >
           <h2 className="mb-5 text-lg font-bold">
             Informations du ticket
           </h2>
@@ -361,7 +367,16 @@ export default async function TicketDetailPage({ params }: PageProps) {
             </div>
 
             <div>
-              <p className="text-sm text-zinc-500">Date d'ouverture</p>
+              <p className="text-sm text-zinc-500">Module SAP</p>
+              <p className="mt-1 font-medium">
+                {ticket.module && ticket.module.toUpperCase() !== "BLANK"
+                  ? ticket.module
+                  : "Non renseigné"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">Date d&apos;ouverture</p>
               <p className="mt-1 font-medium">
                 {dateLabel(ticket.openDate)}
               </p>
@@ -388,7 +403,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
             Ajouter un commentaire
           </h2>
 
-          <form action={addComment} className="space-y-4">
+          <form data-comment-form action={addComment} className="space-y-4">
             <div>
               <label
                 htmlFor="author"
@@ -434,7 +449,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
             </button>
           </form>
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-4" data-comment-list>
             {comments.length === 0 ? (
               <p className="text-sm text-zinc-500">
                 Aucun commentaire pour le moment.
@@ -461,7 +476,10 @@ export default async function TicketDetailPage({ params }: PageProps) {
           </div>
         </section>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+        <section
+          data-history-list
+          className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6"
+        >
           <h2 className="mb-5 text-lg font-bold">
             Historique des modifications
           </h2>

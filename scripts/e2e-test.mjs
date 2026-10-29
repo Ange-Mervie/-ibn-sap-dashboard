@@ -466,7 +466,16 @@ check(
   detailRender.root && detailRender.history && detailRender.comments &&
     detailRender.body.includes("NGONKA") &&
     detailRender.body.includes("MM_INVENTORY"),
-  JSON.stringify({ root: detailRender.root, history: detailRender.history, comments: detailRender.comments })
+  JSON.stringify({
+    root: detailRender.root,
+    history: detailRender.history,
+    comments: detailRender.comments,
+    hasNGONKA: detailRender.body.includes("NGONKA"),
+    hasMM: detailRender.body.includes("MM_INVENTORY"),
+    hasModuleLabel: detailRender.body.includes("Module SAP"),
+    hasSection: detailRender.body.includes("Informations du ticket"),
+    snippet: detailRender.body.slice(0, 200),
+  })
 );
 
 // Cycle complet sur un ticket de test (aucune donnée Excel modifiée)
@@ -495,7 +504,8 @@ const cyc = await page.evaluate(async () => {
     body: JSON.stringify({ status: "In Progress", priority: "High", assignee: "AGENT SAP" }),
   });
   out.patch = patch.status;
-  const patched = await patch.json();
+  let patched = { ticket: {} };
+  try { patched = (await patch.json()) ?? { ticket: {} }; } catch { /* réponse vide (405 attendu en rouge) */ }
   out.status = patched.ticket?.status ?? "";
   out.priority = patched.ticket?.priority ?? "";
   out.assignee = patched.ticket?.assignee ?? "";
