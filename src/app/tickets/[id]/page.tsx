@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -166,8 +166,10 @@ export default async function TicketDetailPage({ params }: PageProps) {
       });
     });
 
-    revalidatePath(`/tickets/${id}`);
-    revalidatePath("/");
+   revalidatePath("/");
+   revalidatePath(`/tickets/${id}`);
+
+   redirect(`/tickets/${id}?saved=1`);
   }
 
   const dateLabel = (value: Date | string | null | undefined) => {
