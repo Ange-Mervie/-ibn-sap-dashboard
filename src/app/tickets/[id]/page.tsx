@@ -1,15 +1,23 @@
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { db } from "@/db";
-import { tickets, ticketEvents, STATUTS, PRIORITES } from "@/db/schema";
 
-type Props = {
+import { db } from "@/db";
+import {
+  tickets,
+  ticketEvents,
+  ticketComments,
+  STATUTS,
+  PRIORITES,
+} from "@/db/schema";
+
+type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function TicketDetailPage({ params }: Props) {
+export default async function TicketDetailPage({ params }: PageProps) {
   const { id } = await params;
 
   const [ticket] = await db
@@ -18,7 +26,21 @@ export default async function TicketDetailPage({ params }: Props) {
     .where(eq(tickets.id, id))
     .limit(1);
 
-  if (!ticket) notFound();
+  if (!ticket) {
+    notFound();
+  }
+
+  const comments = await db
+    .select()
+    .from(ticketComments)
+    .where(eq(ticketComments.ticketId, id))
+    .orderBy(desc(ticketComments.createdAt));
+
+  const events = await db
+    .select()
+    .from(ticketEvents)
+    .where(eq(ticketEvents.ticketId, id))
+    .orderBy(desc(ticketEvents.changedAt));
 
   async function updateTicket(formData: FormData) {
     "use server";
@@ -34,7 +56,9 @@ export default async function TicketDetailPage({ params }: Props) {
       !PRIORITES.includes(priority as (typeof PRIORITES)[number]) ||
       !description
     ) {
-      throw new Error("Informations invalides. Vérifie les champs du ticket.");
+      throw new Error(
+        "Informations invalides. Vérifie la description, le statut et la priorité."
+      );
     }
 
     const [current] = await db
@@ -43,13 +67,31 @@ export default async function TicketDetailPage({ params }: Props) {
       .where(eq(tickets.id, id))
       .limit(1);
 
-    if (!current) notFound();
+    if (!current) {
+      notFound();
+    }
 
     const changes = [
-      { field: "status", oldValue: current.status, newValue: status },
-      { field: "priority", oldValue: current.priority, newValue: priority },
-      { field: "assignee", oldValue: current.assignee, newValue: assignee },
-      { field: "module", oldValue: current.module, newValue: module },
+      {
+        field: "status",
+        oldValue: current.status,
+        newValue: status,
+      },
+      {
+        field: "priority",
+        oldValue: current.priority,
+        newValue: priority,
+      },
+      {
+        field: "assignee",
+        oldValue: current.assignee,
+        newValue: assignee,
+      },
+      {
+        field: "module",
+        oldValue: current.module,
+        newValue: module,
+      },
       {
         field: "description",
         oldValue: current.description,
@@ -57,146 +99,420 @@ export default async function TicketDetailPage({ params }: Props) {
       },
     ].filter((change) => change.oldValue !== change.newValue);
 
-    if (changes.length > 0) {
-      await db.transaction(async (tx) => {
-        await tx
-          .update(tickets)
-          .set({ status: status as typeof current.status,
-                 priority: priority as typeof current.priority,
-                 assignee,
-                 module,
-                 description })
-          .where(eq(tickets.id, id));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(tickets)
+        .set({
+          status: status as typeof current.status,
+          priority: priority as typeof current.priority,
+          assignee,
+          module,
+          description,
+        })
+        .where(eq(tickets.id, id));
 
-        for (const change of changes) {
-          await tx.insert(ticketEvents).values({
-            ticketId: id,
-            field: change.field,
-            oldValue: change.oldValue,
-            newValue: change.newValue,
-            changedBy: "application",
-          });
-        }
-      });
-    }
+      for (const change of changes) {
+        await tx.insert(ticketEvents).values({
+          ticketId: id,
+          field: change.field,
+          oldValue: change.oldValue,
+          newValue: change.newValue,
+          changedBy: "application",
+        });
+      }
+    });
 
     revalidatePath("/");
     revalidatePath(`/tickets/${id}`);
   }
 
-  return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-8 md:px-8">
-      <div className="mx-auto max-w-5xl">
-        <Link href="/" className="text-sm font-medium text-blue-700 hover:underline">
-          ← Retour au tableau de bord
-        </Link>
+  async function addComment(formData: FormData) {
+    "use server";
 
-        <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="mb-8">
-            <p className="text-sm text-zinc-500">Gestion du ticket</p>
-            <h1 className="mt-2 text-2xl font-bold text-zinc-900">
-              {ticket.id}
+    const author = String(formData.get("author") ?? "").trim();
+    const body = String(formData.get("body") ?? "").trim();
+
+    if (!author || !body) {
+      throw new Error("Le nom et le commentaire sont obligatoires.");
+    }
+
+    if (author.length > 100 || body.length > 5000) {
+      throw new Error("Le nom ou le commentaire est trop long.");
+    }
+
+    const [current] = await db
+      .select({ id: tickets.id })
+      .from(tickets)
+      .where(eq(tickets.id, id))
+      .limit(1);
+
+    if (!current) {
+      notFound();
+    }
+
+    await db.transaction(async (tx) => {
+      await tx.insert(ticketComments).values({
+        ticketId: id,
+        author,
+        body,
+      });
+
+      await tx.insert(ticketEvents).values({
+        ticketId: id,
+        field: "commentaire",
+        oldValue: "",
+        newValue: `Commentaire ajouté par ${author}`,
+        changedBy: author,
+      });
+    });
+
+    revalidatePath(`/tickets/${id}`);
+    revalidatePath("/");
+  }
+
+  const dateLabel = (value: Date | string | null | undefined) => {
+    if (!value) return "—";
+
+    const date = value instanceof Date ? value : new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return String(value);
+    }
+
+    return date.toLocaleString("fr-FR");
+  };
+
+  return (
+    <main className="min-h-screen bg-zinc-50 p-4 text-zinc-900 sm:p-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Link
+              href="/"
+              className="text-sm font-medium text-blue-700 hover:underline"
+            >
+              ← Retour au tableau de bord
+            </Link>
+
+            <h1 className="mt-3 text-2xl font-bold">
+              Ticket {ticket.id}
             </h1>
-            <p className="mt-2 text-sm text-zinc-600">
-              Modifie les informations et enregistre les changements.
+
+            <p className="mt-1 text-sm text-zinc-500">
+              Consulte et modifie les informations de ce ticket SAP.
             </p>
           </div>
 
-          <form action={updateTicket} className="space-y-6">
-            <div>
-              <label htmlFor="description" className="mb-2 block text-sm font-semibold">
-                Description du problème
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                required
-                defaultValue={ticket.description}
-                rows={4}
-                className="w-full rounded-lg border border-zinc-300 p-3 text-sm"
-              />
-            </div>
+          <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-800">
+            {ticket.status}
+          </span>
+        </div>
 
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="mb-5 text-lg font-bold">
+            Informations du ticket
+          </h2>
+
+          <form action={updateTicket} className="space-y-5">
+            <div className="grid gap-5 md:grid-cols-2">
               <div>
-                <label htmlFor="status" className="mb-2 block text-sm font-semibold">
+                <label
+                  htmlFor="status"
+                  className="mb-2 block text-sm font-medium"
+                >
                   Statut
                 </label>
+
                 <select
                   id="status"
                   name="status"
                   defaultValue={ticket.status}
-                  className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm"
+                  required
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 text-sm"
                 >
-                  {STATUTS.map((value) => (
-                    <option key={value} value={value}>{value}</option>
+                  {STATUTS.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label htmlFor="priority" className="mb-2 block text-sm font-semibold">
+                <label
+                  htmlFor="priority"
+                  className="mb-2 block text-sm font-medium"
+                >
                   Priorité
                 </label>
+
                 <select
                   id="priority"
                   name="priority"
                   defaultValue={ticket.priority}
-                  className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm"
+                  required
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 text-sm"
                 >
-                  {PRIORITES.map((value) => (
-                    <option key={value} value={value}>{value}</option>
+                  {PRIORITES.map((priority) => (
+                    <option key={priority} value={priority}>
+                      {priority}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label htmlFor="assignee" className="mb-2 block text-sm font-semibold">
-                  Technicien responsable
+                <label
+                  htmlFor="assignee"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Responsable
                 </label>
+
                 <input
                   id="assignee"
                   name="assignee"
                   defaultValue={ticket.assignee}
-                  className="w-full rounded-lg border border-zinc-300 p-3 text-sm"
-                  placeholder="Nom du technicien"
+                  maxLength={100}
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
+                  placeholder="Nom du responsable"
                 />
               </div>
 
               <div>
-                <label htmlFor="module" className="mb-2 block text-sm font-semibold">
+                <label
+                  htmlFor="module"
+                  className="mb-2 block text-sm font-medium"
+                >
                   Module SAP
                 </label>
+
                 <input
                   id="module"
                   name="module"
                   defaultValue={ticket.module}
-                  className="w-full rounded-lg border border-zinc-300 p-3 text-sm"
-                  placeholder="Ex. SAP Basis"
+                  maxLength={50}
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
+                  placeholder="Ex. FI, MM, SD..."
                 />
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 border-t border-zinc-200 pt-5">
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-medium"
+              >
+                Description du problème
+              </label>
+
+              <textarea
+                id="description"
+                name="description"
+                defaultValue={ticket.description}
+                required
+                rows={5}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
+                placeholder="Décris le problème rencontré..."
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-3 border-t border-zinc-100 pt-5">
               <button
                 type="submit"
                 className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800"
               >
                 Enregistrer les modifications
               </button>
+
               <Link
                 href="/"
-                className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
+                className="rounded-lg border border-zinc-300 px-5 py-3 text-sm font-medium hover:bg-zinc-100"
               >
                 Annuler
               </Link>
             </div>
           </form>
-        </div>
+        </section>
 
-        <p className="mt-5 text-sm text-zinc-500">
-          Ticket déclaré par : {ticket.raisedBy} · E-mail : {ticket.email || "Non renseigné"}
-        </p>
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="mb-5 text-lg font-bold">
+            Détails complémentaires
+          </h2>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <p className="text-sm text-zinc-500">Déclaré par</p>
+              <p className="mt-1 font-medium">{ticket.raisedBy || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">E-mail</p>
+              <p className="mt-1 break-words font-medium">
+                {ticket.email || "—"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">Paiement</p>
+              <p className="mt-1 font-medium">{ticket.payment || "—"}</p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">Date d'ouverture</p>
+              <p className="mt-1 font-medium">
+                {dateLabel(ticket.openDate)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">Date de clôture</p>
+              <p className="mt-1 font-medium">
+                {dateLabel(ticket.closeDate)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">Dernière mise à jour</p>
+              <p className="mt-1 font-medium">
+                {dateLabel(ticket.updatedAt)}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="mb-5 text-lg font-bold">
+            Ajouter un commentaire
+          </h2>
+
+          <form action={addComment} className="space-y-4">
+            <div>
+              <label
+                htmlFor="author"
+                className="mb-2 block text-sm font-medium"
+              >
+                Votre nom
+              </label>
+
+              <input
+                id="author"
+                name="author"
+                required
+                maxLength={100}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
+                placeholder="Nom du collaborateur"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="body"
+                className="mb-2 block text-sm font-medium"
+              >
+                Commentaire
+              </label>
+
+              <textarea
+                id="body"
+                name="body"
+                required
+                maxLength={5000}
+                rows={4}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
+                placeholder="Ajoute une note sur le traitement du ticket..."
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="rounded-lg bg-zinc-900 px-5 py-3 text-sm font-semibold text-white hover:bg-zinc-700"
+            >
+              Ajouter le commentaire
+            </button>
+          </form>
+
+          <div className="mt-6 space-y-4">
+            {comments.length === 0 ? (
+              <p className="text-sm text-zinc-500">
+                Aucun commentaire pour le moment.
+              </p>
+            ) : (
+              comments.map((comment) => (
+                <article
+                  key={comment.id}
+                  className="rounded-lg bg-zinc-50 p-4"
+                >
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <p className="font-semibold">{comment.author}</p>
+                    <p className="text-xs text-zinc-500">
+                      {dateLabel(comment.createdAt)}
+                    </p>
+                  </div>
+
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
+                    {comment.body}
+                  </p>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="mb-5 text-lg font-bold">
+            Historique des modifications
+          </h2>
+
+          {events.length === 0 ? (
+            <p className="text-sm text-zinc-500">
+              Aucun changement enregistré pour le moment.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {events.map((event) => (
+                <article
+                  key={event.id}
+                  className="border-l-2 border-blue-200 pl-4"
+                >
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <p className="font-semibold">
+                      {event.field === "status"
+                        ? "Statut"
+                        : event.field === "priority"
+                          ? "Priorité"
+                          : event.field === "assignee"
+                            ? "Responsable"
+                            : event.field === "module"
+                              ? "Module SAP"
+                              : event.field === "description"
+                                ? "Description"
+                                : event.field === "commentaire"
+                                  ? "Commentaire"
+                                  : event.field}
+                    </p>
+
+                    <p className="text-xs text-zinc-500">
+                      {dateLabel(event.changedAt)}
+                    </p>
+                  </div>
+
+                  <p className="mt-1 break-words text-sm text-zinc-600">
+                    {event.oldValue
+                      ? event.oldValue
+                      : "Valeur initiale vide"}
+                    {" → "}
+                    {event.newValue || "Valeur vide"}
+                  </p>
+
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Modifié par : {event.changedBy || "application"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
