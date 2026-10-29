@@ -569,6 +569,55 @@ for (const e of removedHttp3) {
 
 await page.goto("http://localhost:3000/", { waitUntil: "networkidle0" });
 
+// ============================================================
+// ---- 20. GMAIL PREPARE (staging, non configure) ----
+// ============================================================
+const errMark4 = consoleErrors.length; // 503 attendus (Gmail non configure)
+const gmailStatus = await page.evaluate(async () => {
+  const res = await fetch("/api/gmail/status");
+  const body = await res.json();
+  return { status: res.status, body };
+});
+check(
+  "GET /api/gmail/status → non configure",
+  gmailStatus.status === 200 && gmailStatus.body.configured === false,
+  JSON.stringify(gmailStatus)
+);
+
+const gmailAuth = await page.evaluate(async () => {
+  const res = await fetch("/api/gmail/auth-url");
+  let body = null;
+  try { body = await res.json(); } catch { body = { raw: await res.text() }; }
+  return { status: res.status, body };
+});
+check("GET /api/gmail/auth-url → 503 quand non configure", gmailAuth.status === 503 && gmailAuth.body.configured === false, JSON.stringify(gmailAuth));
+
+const gmailSync = await page.evaluate(async () => {
+  const res = await fetch("/api/gmail/sync", { method: "POST" });
+  let body = null;
+  try { body = await res.json(); } catch { body = { raw: await res.text() }; }
+  return { status: res.status, body };
+});
+check("POST /api/gmail/sync → 503 not_configured", gmailSync.status === 503 && gmailSync.body.outcome === "not_configured", JSON.stringify(gmailSync));
+
+await page.goto("http://localhost:3000/emails", { waitUntil: "networkidle0" });
+const gmailPage = await page.evaluate(() => ({
+  status: Boolean(document.querySelector("[data-gmail-status]")),
+  body: document.body.innerText,
+}));
+check(
+  "Page /emails : bloc sync + non configure rendus",
+  gmailPage.status && gmailPage.body.includes("Gmail") && gmailPage.body.toLowerCase().includes("non configuré"),
+  JSON.stringify({ status: gmailPage.status, body: gmailPage.body.slice(0, 200) })
+);
+
+const removedHttp4 = consoleErrors.splice(errMark4);
+for (const e of removedHttp4) {
+  if (!e.includes("Failed to load resource")) consoleErrors.push(e);
+}
+
+await page.goto("http://localhost:3000/", { waitUntil: "networkidle0" });
+
 // ---- 11. Screenshots desktop + tablette ----
 await page.evaluate(() => window.scrollTo(0, 0));
 await page.screenshot({ path: `${shots}/desktop.png`, fullPage: false });

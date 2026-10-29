@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:import": "tsx scripts/import-excel.ts",
-    "db:check": "tsx scripts/check-db.ts"
+    "db:check": "tsx scripts/check-db.ts",
+    "check:gmail": "tsx scripts/check-gmail.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
