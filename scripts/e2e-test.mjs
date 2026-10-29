@@ -450,6 +450,113 @@ for (const e of removedHttp) {
   if (!e.includes("Failed to load resource")) consoleErrors.push(e);
 }
 
+// ============================================================
+// ---- 19. PAGE DETAIL, MODIFICATION, HISTORIQUE, COMMENTAIRES ----
+// ============================================================
+const errMark3 = consoleErrors.length; // 400/404 volontaires du bloc suivant
+await page.goto("http://localhost:3000/tickets/11", { waitUntil: "networkidle0" });
+const detailRender = await page.evaluate(() => ({
+  root: Boolean(document.querySelector("[data-ticket-detail]")),
+  history: Boolean(document.querySelector("[data-history-list]")),
+  comments: Boolean(document.querySelector("[data-comment-form]")),
+  body: document.body.innerText,
+}));
+check(
+  "Page /tickets/11 : détail, historique et commentaires rendus",
+  detailRender.root && detailRender.history && detailRender.comments &&
+    detailRender.body.includes("NGONKA") &&
+    detailRender.body.includes("MM_INVENTORY"),
+  JSON.stringify({ root: detailRender.root, history: detailRender.history, comments: detailRender.comments })
+);
+
+// Cycle complet sur un ticket de test (aucune donnée Excel modifiée)
+const cyc = await page.evaluate(async () => {
+  const out = {};
+  const create = await fetch("/api/tickets", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      description: "Cycle détail/historique/commentaires — test e2e",
+      status: "Not Started",
+      priority: "Medium",
+      module: "FI_AR",
+      raisedBy: "E2E DETAIL",
+      email: "detail.test@ibngroup.com",
+    }),
+  });
+  const createdBody = await create.json();
+  out.create = create.status;
+  out.id = createdBody.ticket?.id ?? null;
+  if (!out.id) return out;
+
+  const patch = await fetch(`/api/tickets/${encodeURIComponent(out.id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "In Progress", priority: "High", assignee: "AGENT SAP" }),
+  });
+  out.patch = patch.status;
+  const patched = await patch.json();
+  out.status = patched.ticket?.status ?? "";
+  out.priority = patched.ticket?.priority ?? "";
+  out.assignee = patched.ticket?.assignee ?? "";
+
+  const hist = await fetch(`/api/tickets/${encodeURIComponent(out.id)}/history`);
+  out.histStatus = hist.status;
+  out.histRows = ((await hist.json()).events ?? []).length;
+
+  const comment = await fetch(`/api/tickets/${encodeURIComponent(out.id)}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ author: "E2E DETAIL", body: "Commentaire ajouté par le test e2e." }),
+  });
+  out.comment = comment.status;
+  const after = await fetch(`/api/tickets/${encodeURIComponent(out.id)}`);
+  const afterBody = await after.json();
+  out.comments = (afterBody.comments ?? []).length;
+  out.commentText = (afterBody.comments ?? []).map((c) => c.body).join(" | ");
+  out.events = (afterBody.events ?? []).length;
+  return out;
+});
+
+check("PATCH modification appliquée (statut, priorité, responsable)",
+  cyc.patch === 200 && cyc.status === "In Progress" && cyc.priority === "High" && cyc.assignee === "AGENT SAP",
+  JSON.stringify(cyc));
+check("Historique : création + 2 changements enregistrés",
+  cyc.histStatus === 200 && cyc.histRows >= 3 && cyc.events >= 3,
+  `hist=${cyc.histRows} events=${cyc.events}`);
+check("POST commentaire → 201 et visible dans le détail",
+  cyc.comment === 201 && cyc.comments === 1 && cyc.commentText.includes("test e2e"),
+  `comment=${cyc.comment} count=${cyc.comments}`);
+
+const patchBad = await page.evaluate(async (id) => {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "Statut Inexistant", description: "x" }),
+  });
+  const body = await res.json();
+  return { status: res.status, errors: body.errors ?? [] };
+}, cyc.id);
+check("PATCH invalide → 400 + erreurs FR", patchBad.status === 400 && patchBad.errors.length >= 2,
+  JSON.stringify(patchBad));
+
+// Nettoyage : supprime le ticket de test + ses événements/commentaires
+if (cyc.id) {
+  const gone = await page.evaluate(async (id) => {
+    await fetch(`/api/tickets/${encodeURIComponent(id)}`, { method: "DELETE" });
+    const res = await fetch(`/api/tickets/${encodeURIComponent(id)}`);
+    const hist = await fetch(`/api/tickets/${encodeURIComponent(id)}/history`);
+    return { detail: res.status, history: hist.status };
+  }, cyc.id);
+  check("Nettoyage du ticket de test (détail + historique supprimés)",
+    gone.detail === 404 && gone.history === 404, JSON.stringify(gone));
+}
+
+const removedHttp3 = consoleErrors.splice(errMark3);
+for (const e of removedHttp3) {
+  if (!e.includes("Failed to load resource")) consoleErrors.push(e);
+}
+
 await page.goto("http://localhost:3000/", { waitUntil: "networkidle0" });
 
 // ---- 11. Screenshots desktop + tablette ----
