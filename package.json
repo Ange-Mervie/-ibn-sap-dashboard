@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:import": "tsx scripts/import-excel.ts",
     "db:check": "tsx scripts/check-db.ts",
-    "check:gmail": "tsx scripts/check-gmail.ts"
+    "check:gmail": "tsx scripts/check-gmail.ts",
+    "check:security": "tsx scripts/check-security.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",

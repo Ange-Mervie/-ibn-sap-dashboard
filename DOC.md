@@ -19,8 +19,14 @@ npm run build      # build de production
 npm start          # serveur de production (après build)
 npm run lint       # vérification ESLint
 npx tsc --noEmit   # vérification TypeScript
-node scripts/e2e-test.mjs   # tests fonctionnels (37 vérifications, serveur démarré)
+node scripts/e2e-test.mjs   # tests fonctionnels (serveur démarré sur :3000)
 npx tsx scripts/check-data.ts  # contrôle rapide des données chargées
+npm run db:generate   # génère une migration Drizzle (MySQL)
+npm run db:migrate    # applique les migrations sur ibn_dashboard
+npm run db:import     # import idempotent du classeur Excel → MySQL
+npm run db:check      # contrôle de la base MySQL (98 tickets attendus)
+npm run check:gmail   # contrôle Gmail préparé (non configuré)
+npx tsx scripts/check-security.ts  # contrôles sécurité (validators, secrets)
 ```
 
 ---
@@ -179,7 +185,9 @@ Chaque alerte affiche le nombre de tickets concernés et leurs numéros.
 
 ## 8. Limites connues
 
-1. **Pas de modification des tickets** : version consultative uniquement (comme demandé).
+1. **Pas de modification des tickets** : version consultive uniquement (comme demandé).
+   *(Remarque Phase 1 : la persistance MySQL + API REST autorise désormais la création,
+   la modification et le commentaire via `/api/tickets*`; l'Excel source n'est jamais modifié.)*
 2. **Pas de SLA ni de taux de satisfaction** : ces informations n'existent pas dans le fichier.
 3. **Délais calculables sur 56/98 tickets seulement** (42 tickets ouverts sans Close Date) ;
    le délai moyen est donc affiché avec sa base de calcul visible.
@@ -202,8 +210,12 @@ Chaque alerte affiche le nombre de tickets concernés et leurs numéros.
 | `npx tsc --noEmit` | 0 erreur |
 | `npm run lint` | 0 erreur (2 warnings `<img>` assumés : images décoratives) |
 | `npm run build` | ✓ build de production réussi |
-| `node scripts/e2e-test.mjs` | **37/37 tests réussis**, 0 erreur JavaScript |
+| `node scripts/e2e-test.mjs` | **56/56 tests réussis**, 0 erreur JavaScript |
 | `npx tsx scripts/check-data.ts` | chiffres et contrôles conformes |
+| `npx tsx scripts/check-sla.ts` | SLA simulé : late=42, due=0, blocked=15, criticalLate=3 |
+| `npx tsx scripts/check-metrics.ts` | métriques : slaRate=75% |
+| `npm run db:check` | base MySQL : 98 tickets, 9 contrôles |
+| `npm run check:gmail` | Gmail préparé : not_configured, règles actives |
 
 Tests couverts par `e2e-test.mjs` :
 
@@ -225,3 +237,42 @@ Tests couverts par `e2e-test.mjs` :
   7. clic sur la barre de janvier du graphique temporel → période filtrée,
      Total **7**, chip « Période : 01/01/2026 → 31/01/2026 » ; nouveau clic
      → désactivation et retour à **98**.
+
+---
+
+## 10. Tickets persistants (MySQL + Drizzle ORM)
+
+Phase 1 — évolution du dashboard vers une application de gestion de tickets :
+
+- **Base** : MySQL 8.3 local (`ibn_dashboard`, port `3306`), accès via Drizzle ORM
+  (`drizzle-orm` + driver `mysql2`) et migrations Drizzle (`drizzle-kit`).
+- **Schéma** : `tickets`, `ticket_comments`, `ticket_events`, `email_messages`,
+  `sync_runs`, `gmail_tokens`, `ticket_counters`.
+- **Import** : `npm run db:import` → import idempotent du classeur Excel
+  (les identifiants existants sont ignorés — `INSERT IGNORE`).
+- **Loader** : `src/lib/loadDb.ts` → `loadIssueDataFromDb()` (même `IssueData` que le lecteur Excel).
+- **API** : 
+  - `POST /api/tickets` → création (numéro `SAP-YYYY-NNNN` via compteur verrouillé).
+  - `GET /api/tickets/[id]`, `PATCH /api/tickets/[id]`, `DELETE /api/tickets/[id]`.
+  - `GET /api/tickets/[id]/history`, `POST /api/tickets/[id]/comments`.
+  - Validation serveur via `src/lib/validate.ts` (messages en français, rejets 400).
+- **UI** : `/tickets/nouveau` (formulaire), `/tickets/[id]` (détail, modification, historique, commentaires).
+
+---
+
+## 11. Gmail (préparé — non connecté)
+
+- Variables d'environnement : `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REDIRECT_URI`, `GMAIL_SYNC_LABEL`, `GMAIL_SENDER_DOMAINS`, `GMAIL_SUBJECT_KEYWORDS` (voir `.env.example`).
+- Flux : `/api/gmail/auth-url` → `/api/gmail/callback` → jetons en base (`gmail_tokens`) → `/api/gmail/sync`.
+- Synchronisation → staging (`email_messages`, `sync_runs`) ; actions humaines via
+  `/api/gmail/staging` (`converted` | `linked` | `ignored`).
+- **Aucune synchronisation automatique** (polling) : création/modification/rattachement
+  restent des actions humaines validées via l'API.
+
+---
+
+## 12. Sécurité et limites
+
+- Aucun secret committé (`.env.local` ignoré, `!.env.example` autorisé).
+- Rédaction serveur des tickets via validateurs (`src/lib/validate.ts`) ; réponses 400/401/404.
+- Odoo : intégration non prévue (instance inaccessible) — colonne `source` (`excel` | `form` | `email`).
