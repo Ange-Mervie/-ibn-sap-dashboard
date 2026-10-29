@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { loadIssueDataFromDb } from "@/lib/loadDb";
+import { lastSync } from "@/lib/gmail/sync";
 import Banner from "@/components/Banner";
 import Dashboard from "@/components/Dashboard";
 
@@ -12,13 +13,15 @@ export default async function HomePage() {
   await connection();
 
   const data = await loadIssueDataFromDb();
+  const last = await lastSync();
+  const syncNote = last ? { outcome: last.outcome, detail: last.detail } : null;
 
   return (
     <div className="min-h-screen bg-zinc-50">
       {/* Bande d'images défilante (inchangée) */}
       <Banner />
       {/* Application : en-tête, filtres, sidebar, 3 sections */}
-      <Dashboard data={data} />
+      <Dashboard data={data} syncNote={syncNote} />
     </div>
   );
 }

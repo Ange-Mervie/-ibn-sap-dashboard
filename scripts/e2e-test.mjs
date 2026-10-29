@@ -618,6 +618,18 @@ for (const e of removedHttp4) {
 
 await page.goto("http://localhost:3000/", { waitUntil: "networkidle0" });
 
+// ---- 20b. BANDAU DE DERNIERE SYNCHRONISATION (Task 5) ----
+const syncBanner = await page.evaluate(() => ({
+  present: Boolean(document.querySelector("[data-sync-banner]")),
+  text: document.body.innerText,
+}));
+check("Bandeau « Dernière synchronisation » visible sur le dashboard", syncBanner.present, JSON.stringify(syncBanner.present));
+check("Bandeau contient le statut de la dernière sync", syncBanner.text.includes("Dernière synchronisation"), JSON.stringify(syncBanner.text.slice(0, 200)));
+const bannerLink = await page.evaluate(() =>
+  [...document.querySelectorAll("a")].some((a) => a.getAttribute("href") === "/emails" && a.textContent.includes("Voir les candidats"))
+);
+check("Bandeau → lien /emails présent", bannerLink);
+
 // ---- 11. Screenshots desktop + tablette ----
 await page.evaluate(() => window.scrollTo(0, 0));
 await page.screenshot({ path: `${shots}/desktop.png`, fullPage: false });

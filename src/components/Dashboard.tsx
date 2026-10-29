@@ -16,7 +16,13 @@ const SECTIONS = [
   { id: "analysis", label: "Analyse", icon: BarChart3 },
 ];
 
-export default function Dashboard({ data }: { data: IssueData }) {
+export default function Dashboard({
+  data,
+  syncNote,
+}: {
+  data: IssueData;
+  syncNote?: { outcome: string; detail: string } | null;
+}) {
   // ==========================================================
   // ÉTAT GLOBAL UNIQUE DES FILTRES (source de vérité)
   // Tout en dérive : KPI, graphiques, tableau, compteur, chips.
@@ -99,6 +105,21 @@ export default function Dashboard({ data }: { data: IssueData }) {
 
   return (
     <div>
+      {/* Bande d'information Gmail / dernière synchronisation (Task 5) */}
+      {syncNote && (
+        <div className="border-b border-zinc-200 bg-zinc-50">
+          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-2 px-4 py-2 text-xs text-zinc-600">
+            <span className="font-medium text-zinc-700">Gmail :</span>
+            <span data-sync-banner>
+              Dernière synchronisation : {syncNote.outcome} — {syncNote.detail}
+            </span>
+            <Link href="/emails" className="text-blue-700 underline">
+              Voir les candidats
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* ============ EN-TÊTE : titre, période, mise à jour ============ */}
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-[1500px] px-4 py-4">
