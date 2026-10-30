@@ -1,7 +1,10 @@
 import { defineConfig } from "drizzle-kit";
+import { loadEnvConfig } from "@next/env";
+
+loadEnvConfig(process.cwd());
 
 // Configuration drizzle-kit — dialect MySQL, schéma partagé.
-// DATABASE_URL provient de .env.local (drizzle-kit lit .env automatiquement).
+// Charger l'environnement Next.js pour les commandes Drizzle hors runtime Next.
 export default defineConfig({
   dialect: "mysql",
   schema: "./src/db/schema.ts",

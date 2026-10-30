@@ -1,6 +1,6 @@
 // ============================================================
 // Schéma Drizzle ORM — MySQL 8.3 (InnoDB, utf8mb4)
-// Tables : tickets, ticket_comments, ticket_events,
+// Tables : users, tickets, ticket_comments, ticket_events,
 //          email_messages, sync_runs, gmail_tokens, ticket_counters
 // ============================================================
 import {
@@ -9,6 +9,7 @@ import {
   varchar,
   text,
   int,
+  boolean,
   timestamp,
   date,
   uniqueIndex,
@@ -28,6 +29,33 @@ export const PRIORITES = ["Critical", "High", "Medium", "Low"] as const;
 export const SOURCES = ["excel", "form", "email"] as const;
 export const EMAIL_STATUSES = ["pending", "converted", "linked", "ignored"] as const;
 export const SYNC_OUTCOMES = ["ok", "error", "not_configured"] as const;
+
+// --- rôles utilisateurs (MANAGER préparé pour évolution future) ---
+export const ROLES = ["admin", "agent", "viewer", "manager"] as const;
+export type Role = (typeof ROLES)[number];
+
+// --- utilisateurs (authentification RBAC) ---
+export const users = mysqlTable(
+  "users",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 100 }).notNull(),
+    email: varchar("email", { length: 150 }).notNull(),
+    // Mot de passe stocké uniquement sous forme de hash scrypt — jamais en clair
+    passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+    role: mysqlEnum("role", ROLES).notNull().default("viewer"),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  },
+  (t) => [
+    uniqueIndex("users_email_uid").on(t.email),
+    index("users_role").on(t.role),
+  ]
+);
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 
 // --- tickets ---
 export const tickets = mysqlTable(

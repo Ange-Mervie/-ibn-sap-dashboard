@@ -100,6 +100,20 @@ page.on("console", (m) => {
 });
 
 await page.setViewport({ width: 1440, height: 900 });
+
+// ---- Auth e2e : connexion ADMIN (session ibn_session) ----
+await page.goto("http://localhost:3000/login", { waitUntil: "networkidle0", timeout: 60000 });
+await page.type("#login-email", "e2e.admin@ibngroup.com");
+await page.type("#login-password", "E2e!Passw0rd_2026");
+await page.click("#login-submit");
+await sleep(4000);
+const loggedInOk = await page.evaluate(async () => {
+  const r = await fetch("/api/auth/me", { cache: "no-store" });
+  const data = await r.json().catch(() => ({}));
+  return { status: r.status, role: data?.user?.role ?? null };
+});
+check("E2E login ADMIN OK", loggedInOk.status === 200 && loggedInOk.role === "admin", JSON.stringify(loggedInOk));
+
 await page.goto(URL, { waitUntil: "networkidle0", timeout: 60000 });
 
 // ---- 1. KPI initiaux ----

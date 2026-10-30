@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle } from "lucide-react";
+import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users } from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
 import { STATUSES, PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY } from "@/lib/issues";
 import Overview from "./Overview";
 import IssueTable from "./IssueTable";
 import Analysis from "./Analysis";
+import SessionControls from "./SessionControls";
 
 // Sections de navigation (sidebar + mobile)
 const SECTIONS = [
@@ -19,10 +20,14 @@ const SECTIONS = [
 export default function Dashboard({
   data,
   syncNote,
+  user,
 }: {
   data: IssueData;
   syncNote?: { outcome: string; detail: string } | null;
+  user: { name: string; email: string; role: string };
 }) {
+  const canCreateTickets = user.role === "admin" || user.role === "agent";
+  const canAccessGmail = user.role === "admin" || user.role === "manager";
   // ==========================================================
   // ÉTAT GLOBAL UNIQUE DES FILTRES (source de vérité)
   // Tout en dérive : KPI, graphiques, tableau, compteur, chips.
@@ -106,14 +111,14 @@ export default function Dashboard({
   return (
     <div>
       {/* Bande d'information Gmail / dernière synchronisation (Task 5) */}
-      {syncNote && (
+      {canAccessGmail && syncNote && (
         <div className="border-b border-zinc-200 bg-zinc-50">
           <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-2 px-4 py-2 text-xs text-zinc-600">
             <span className="font-medium text-zinc-700">Gmail :</span>
             <span data-sync-banner>
               Dernière synchronisation : {syncNote.outcome} — {syncNote.detail}
             </span>
-            <Link href="/emails" className="text-blue-700 underline">
+              <Link href="/emails" className="text-blue-700 underline">
               Voir les candidats
             </Link>
           </div>
@@ -133,16 +138,19 @@ export default function Dashboard({
                 {data.period.to.split("-").reverse().join("/")} · Dernière actualisation : {data.lastUpdate}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-3">
               <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
                 {filtered.length} / {data.issues.length} tickets
               </span>
-              <Link
+              {canCreateTickets && <Link
                 href="/tickets/nouveau"
                 className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
               >
                 <PlusCircle size={15} /> Nouveau ticket
-              </Link>
+              </Link>}
+              {canAccessGmail && <Link href="/emails" className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Gmail</Link>}
+              {user.role === "admin" && <Link href="/admin" className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"><Users size={15} /> Utilisateurs</Link>}
+              <SessionControls user={user} />
             </div>
           </div>
 

@@ -8,11 +8,18 @@ import { gmailConfigStatus } from "@/lib/gmail/config";
 import { lastSync } from "@/lib/gmail/sync";
 import { SyncControls } from "@/components/SyncControls";
 import { EmailCandidates } from "@/components/EmailCandidates";
+import { canManage, getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import SessionControls from "@/components/SessionControls";
 
 // Route bloquante : les données dynamiques (DB, params) ne peuvent pas être prérendues.
 export const instant = false;
 
 export default async function EmailsPage() {
+  const session = await getSession();
+  if (!session) redirect("/login?from=%2Femails");
+  if (!canManage(session.role)) redirect("/");
+
   const status = gmailConfigStatus();
   const last = await lastSync();
   const token = await getGmailToken();
@@ -35,9 +42,13 @@ export default async function EmailsPage() {
         </Link>
       </div>
 
+      <div className="mt-4 flex justify-end">
+        <SessionControls user={{ name: session.name, email: session.email, role: session.role }} />
+      </div>
+
       <SyncControls configured={status.configured} lastSync={last} accessToken={token?.accessToken ?? undefined} />
 
-      <EmailCandidates messages={pending} />
+      <EmailCandidates messages={pending} canCreateTicket={session.role === "admin" || session.role === "agent"} />
     </main>
   );
 }

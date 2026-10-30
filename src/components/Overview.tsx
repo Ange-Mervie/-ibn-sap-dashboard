@@ -109,7 +109,7 @@ export default function Overview({
     <div>
       <SectionHeader
         title="Vue générale"
-        subtitle="Indicateurs clés calculés à partir des lignes détaillées du fichier Excel (98 tickets)"
+        subtitle={`Indicateurs clés calculés à partir des ${total} tickets chargés`}
         image="/banner/office.jpg"
       />
 

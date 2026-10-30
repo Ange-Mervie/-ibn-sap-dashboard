@@ -3,8 +3,13 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { emailMessages, tickets } from "@/db/schema";
 import { jsonError } from "@/lib/db";
+import { canManage, getSession } from "@/lib/auth";
 
 export async function PATCH(req: Request) {
+  const session = await getSession();
+  if (!session) return jsonError(401, "Non authentifié.");
+  if (!canManage(session.role)) return jsonError(403, "Accès Gmail réservé aux administrateurs et managers.");
+
   const { gmailMessageId, action, ticketId } = (await req.json().catch(() => ({}))) as {
     gmailMessageId?: string;
     action?: string;
@@ -30,6 +35,11 @@ export async function PATCH(req: Request) {
     return jsonError(404, `Candidat Gmail introuvable : ${gmailMessageId}`);
   }
 
+  if (action === "linked" && ticketId) {
+    const [ticket] = await db.select({ id: tickets.id }).from(tickets).where(eq(tickets.id, ticketId)).limit(1);
+    if (!ticket) return jsonError(404, `Ticket introuvable : ${ticketId}`);
+  }
+
   await db
     .update(emailMessages)
     .set({
@@ -37,13 +47,6 @@ export async function PATCH(req: Request) {
       ticketId: action === "ignored" ? null : ticketId ?? msg.ticketId ?? null,
     })
     .where(eq(emailMessages.gmailMessageId, gmailMessageId));
-
-  if (action === "linked" && ticketId) {
-    const t = await db.select().from(tickets).where(eq(tickets.id, ticketId)).limit(1);
-    if (!t[0]) {
-      return jsonError(404, `Ticket introuvable : ${ticketId}`);
-    }
-  }
 
   return Response.json({ gmailMessageId, action });
 }

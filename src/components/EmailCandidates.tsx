@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Ban, Link2, PlusCircle, MailOpen } from "lucide-react";
+import { Ban, Link2, PlusCircle } from "lucide-react";
 import type { EmailMessage } from "@/db/schema";
 
 export function EmailCandidates({
   messages,
   onCreated,
+  canCreateTicket = true,
 }: {
   messages: EmailMessage[];
   onCreated?: (ticketId: string) => void;
+  canCreateTicket?: boolean;
 }) {
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -79,14 +81,14 @@ export function EmailCandidates({
             </div>
             <p className="mt-2 text-sm text-zinc-600">{m.bodySnippet}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button
+              {canCreateTicket && <button
                 type="button"
                 disabled={busyId === m.gmailMessageId}
                 onClick={() => createTicket(m)}
                 className="flex items-center gap-1.5 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-700 disabled:opacity-50"
               >
                 <PlusCircle size={13} /> Créer le ticket
-              </button>
+              </button>}
               <button
                 type="button"
                 disabled={busyId === m.gmailMessageId}

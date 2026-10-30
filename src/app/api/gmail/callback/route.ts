@@ -2,8 +2,14 @@
 import { NextResponse } from "next/server";
 import { exchangeCode } from "@/lib/gmail/oauth";
 import { saveGmailTokens } from "@/lib/gmail/tokens";
+import { canManage, getSession } from "@/lib/auth";
+import { jsonError } from "@/lib/db";
 
 export async function GET(req: Request) {
+  const session = await getSession();
+  if (!session) return jsonError(401, "Non authentifié.");
+  if (!canManage(session.role)) return jsonError(403, "Accès Gmail réservé aux administrateurs et managers.");
+
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
   const error = searchParams.get("error");

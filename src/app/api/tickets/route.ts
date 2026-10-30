@@ -4,13 +4,15 @@ import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { tickets, ticketCounters, ticketEvents, type Ticket } from "@/db/schema";
-import { requireWriteToken, jsonError } from "@/lib/db";
+import { jsonError } from "@/lib/db";
+import { getSession, canWrite } from "@/lib/auth";
 import { validateTicketInput } from "@/lib/validate";
 
 export async function POST(req: Request) {
-  if (!requireWriteToken(req)) {
-    return jsonError(401, "Authentification requise : en-tête Authorization manquant ou invalide.");
-  }
+  // Double protection : proxy.ts bloque les non-connectés, ici on vérifie le rôle côté serveur
+  const session = await getSession();
+  if (!session) return jsonError(401, "Non authentifié. Veuillez vous connecter.");
+  if (!canWrite(session.role)) return jsonError(403, "Accès refusé. Votre rôle ne permet pas la création de tickets.");
 
   let body: unknown;
   try {
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
         field: "creation",
         oldValue: "",
         newValue: id,
-        changedBy: data.raisedBy || "application",
+        changedBy: session.name,
       });
 
       const [saved] = await tx.select().from(tickets).where(eq(tickets.id, id));
