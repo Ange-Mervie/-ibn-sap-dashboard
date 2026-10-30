@@ -39,29 +39,37 @@ export default function Dashboard({
   const [notifOpen, setNotifOpen] = useState(false);
 
   // Listes des filtres déroulants (à partir des données)
+  // Espace agent : seuls les tickets assignés à l'utilisateur connecté sont visibles
+  const visibleIssues = useMemo(() => {
+    const base = user.role === "agent" ? data.issues.filter((i) => i.assignee) : data.issues;
+    if (user.role !== "agent") return base;
+    const email = user.email.trim().toLowerCase();
+    return base.filter((i) => i.assignee && i.assignee.toLowerCase().includes(email));
+  }, [data.issues, user]);
+
   const modules = useMemo(
-    () => [...new Set(data.issues.map((i) => i.module).filter(Boolean))].sort(),
-    [data.issues]
+    () => [...new Set(visibleIssues.map((i) => i.module).filter(Boolean))].sort(),
+    [visibleIssues]
   );
   const payments = useMemo(() => {
-    const vals = new Set(data.issues.map((i) => i.payment).filter(Boolean));
+    const vals = new Set(visibleIssues.map((i) => i.payment).filter(Boolean));
     return [...vals].sort();
-  }, [data.issues]);
+  }, [visibleIssues]);
 
   // Tickets retenus par la combinaison de filtres active
-  const filtered = useMemo(() => applyFilters(data.issues, filters), [data.issues, filters]);
+  const filtered = useMemo(() => applyFilters(visibleIssues, filters), [visibleIssues, filters]);
 
   // Données par graphique : chaque dimension est exclue de son propre
   // filtre → les autres catégories restent visibles et cliquables
   const charts = useMemo(
     () => ({
-      status: applyFilters(data.issues, filters, "status"),
-      priority: applyFilters(data.issues, filters, "priority"),
-      module: applyFilters(data.issues, filters, "module"),
-      payment: applyFilters(data.issues, filters, "payment"),
-      period: applyFilters(data.issues, filters, "period"),
+      status: applyFilters(visibleIssues, filters, "status"),
+      priority: applyFilters(visibleIssues, filters, "priority"),
+      module: applyFilters(visibleIssues, filters, "module"),
+      payment: applyFilters(visibleIssues, filters, "payment"),
+      period: applyFilters(visibleIssues, filters, "period"),
     }),
-    [data.issues, filters]
+    [visibleIssues, filters]
   );
 
   const chips = filterChips(filters);
@@ -154,7 +162,7 @@ export default function Dashboard({
             </div>
             <div className="flex flex-wrap items-center justify-end gap-3">
               <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-                {filtered.length} / {data.issues.length} tickets
+                {filtered.length} / {visibleIssues.length} tickets
               </span>
               {canCreateTickets && <Link
                 href="/tickets/nouveau"
@@ -367,7 +375,7 @@ export default function Dashboard({
           <section id="overview" className="scroll-mt-4">
             <Overview
               issues={filtered}
-              total={data.issues.length}
+              total={visibleIssues.length}
               charts={charts}
               filters={filters}
               onToggle={toggleFilter}
@@ -395,7 +403,7 @@ export default function Dashboard({
       {/* Pied de page */}
       <footer className="border-t border-zinc-200 bg-white py-5">
         <p className="text-center text-xs text-zinc-400">
-          IBN SAP Dashboard , Source : {data.source} · {data.issues.length} tickets ·
+          IBN SAP Dashboard , Source : {data.source} · {visibleIssues.length} tickets ·
           Consultation, création et modification des tickets (la source Excel n&apos;est pas modifiée)
         </p>
       </footer>
