@@ -100,6 +100,19 @@ export default function Overview({
       .slice(0, 10);
   }, [issues]);
 
+  // Charge de travail par agent (Manager / supervision)
+  const agentLoad = useMemo(() => {
+    const map = new Map<string, { name: string; count: number }>();
+    for (const i of issues) {
+      if (!isOpen(i)) continue;
+      const key = i.assignee || "Non assigné";
+      const cur = map.get(key) ?? { name: key, count: 0 };
+      cur.count += 1;
+      map.set(key, cur);
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count);
+  }, [issues]);
+
   // La période sélectionnée n'est PAS appliquée ici (sinon le mois
   // cliqué disparaîtrait du graphe) : toutes les barres restent visibles,
   // le mois actif est simplement mis en évidence.
@@ -128,6 +141,22 @@ export default function Overview({
           color="text-zinc-900"
         />
       </div>
+
+      {/* Charge de travail par agent (Manager) */}
+      <Panel title="Charge de travail par agent" className="mb-6">
+        {agentLoad.length === 0 ? (
+          <p className="py-6 text-center text-sm text-zinc-400">Aucun agent avec des tickets assignés.</p>
+        ) : (
+          <div className="space-y-2">
+            {agentLoad.map((a) => (
+              <div key={a.name} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2">
+                <span className="text-sm font-medium text-zinc-800">{a.name}</span>
+                <span className="text-sm text-zinc-600">{a.count} ticket(s) ouvert(s)</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
 
       {/* Graphiques interactifs : un clic filtre toute la page */}
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
