@@ -5,17 +5,49 @@ import Link from "next/link";
 import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users, Bell } from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
 import { STATUSES, PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY, isOpen } from "@/lib/issues";
-import Overview from "./Overview";
 import IssueTable from "./IssueTable";
 import Analysis from "./Analysis";
 import SessionControls from "./SessionControls";
+import Sidebar from "./Sidebar";
+import AdminHome from "./AdminHome";
+import ManagerHome from "./ManagerHome";
+import AgentHome from "./AgentHome";
+import ViewerHome from "./ViewerHome";
+import type { SidebarItem } from "./Sidebar";
+import type { HomeProps } from "./homeProps";
 
-// Sections de navigation (sidebar + mobile)
+// Sections de navigation (mobile)
 const SECTIONS = [
   { id: "overview", label: "Vue générale", icon: LayoutDashboard },
   { id: "tracking", label: "Suivi des incidents", icon: Table2 },
   { id: "analysis", label: "Analyse", icon: BarChart3 },
 ];
+
+// Navigation dédiée par rôle (refonte visuelle : 4 espaces distincts)
+const NAV: Record<string, SidebarItem[]> = {
+  admin: [
+    { id: "overview", label: "Vue générale", icon: LayoutDashboard },
+    { id: "tracking", label: "Tous les tickets", icon: Table2 },
+    { id: "analysis", label: "Rapports & analyses", icon: BarChart3 },
+    { id: "admin", label: "Collaborateurs", href: "/admin", icon: Users },
+    { id: "emails", label: "Comptes rendus & notifications", href: "/emails", icon: Bell },
+  ],
+  manager: [
+    { id: "overview", label: "Supervision", icon: LayoutDashboard },
+    { id: "tracking", label: "Suivi des tickets", icon: Table2 },
+    { id: "analysis", label: "Rapports", icon: BarChart3 },
+  ],
+  agent: [
+    { id: "overview", label: "Mon tableau de bord", icon: LayoutDashboard },
+    { id: "tracking", label: "Mes tickets", icon: Table2 },
+    { id: "analysis", label: "Mes interventions", icon: BarChart3 },
+  ],
+  viewer: [
+    { id: "overview", label: "Vue globale", icon: LayoutDashboard },
+    { id: "tracking", label: "Incidents", icon: Table2 },
+    { id: "analysis", label: "Rapports", icon: BarChart3 },
+  ],
+};
 
 export default function Dashboard({
   data,
@@ -124,6 +156,16 @@ export default function Dashboard({
     });
     return () => observer.disconnect();
   }, []);
+
+  const navItems = NAV[user.role] ?? NAV.admin;
+  const Home = user.role === "admin" ? AdminHome : user.role === "manager" ? ManagerHome : user.role === "agent" ? AgentHome : ViewerHome;
+  function handleNavSelect(id: string) {
+    if (id.startsWith("/")) {
+      window.location.href = id;
+      return;
+    }
+    setActiveSection(id);
+  }
 
   const selectClass =
     "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none";
@@ -346,40 +388,23 @@ export default function Dashboard({
       </nav>
 
       <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6">
-        {/* ============ BARRE LATÉRALE ============ */}
-        <aside className="hidden w-56 shrink-0 lg:block">
-          <nav className="sticky top-6 space-y-1 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
-            {SECTIONS.map((s) => {
-              const Icon = s.icon;
-              const active = activeSection === s.id;
-              return (
-                <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  className={`flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition-colors ${
-                    active
-                      ? "bg-blue-600 font-medium text-white"
-                      : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
-                  }`}
-                >
-                  <Icon size={16} />
-                  {s.label}
-                </a>
-              );
-            })}
-          </nav>
-        </aside>
+        {/* ============ BARRE LATÉRALE (navigation par rôle) ============ */}
+        <Sidebar items={navItems} active={activeSection} onSelect={handleNavSelect} />
 
         {/* ============ CONTENU ============ */}
         <main className="min-w-0 flex-1 space-y-16">
           <section id="overview" className="scroll-mt-4">
-            <Overview
+            <Home
+              data={data}
+              syncNote={syncNote}
+              user={user}
               issues={filtered}
               total={visibleIssues.length}
               charts={charts}
               filters={filters}
               onToggle={toggleFilter}
               onToggleMonth={toggleMonth}
+              onReset={resetFilters}
             />
           </section>
 
