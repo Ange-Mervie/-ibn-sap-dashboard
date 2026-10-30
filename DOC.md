@@ -276,3 +276,42 @@ Phase 1 — évolution du dashboard vers une application de gestion de tickets :
 - Aucun secret committé (`.env.local` ignoré, `!.env.example` autorisé).
 - Rédaction serveur des tickets via validateurs (`src/lib/validate.ts`) ; réponses 400/401/404.
 - Odoo : intégration non prévue (instance inaccessible) — colonne `source` (`excel` | `form` | `email`).
+
+---
+
+## 13. Refonte professionnelle — espaces ADMIN / MANAGER / AGENT / VIEWER
+
+Mission : « REFONTE PROFESSIONNELLE DU DASHBOARD SAP — GESTION DES INCIDENTS, ACTIVITÉS ET PERFORMANCES ».
+
+### 13.1 Nouvelle identité visuelle des espaces
+
+- **Barre latérale fixe** (`src/components/Sidebar.tsx`) avec navigation **par rôle**.
+- **Espaces distincts** rendus selon le rôle connecté (`src/components/Dashboard.tsx`) :
+  - **Admin** (`AdminHome.tsx`) : vue globale — KPI, graphiques, **dernières activités**.
+  - **Manager** (`ManagerHome.tsx`) : supervision — tickets à affecter, critiques, en retard, charge de travail par agent.
+  - **Agent** (`AgentHome.tsx`) : espace personnel — salutation, KPIs métier, « Mes tickets ».
+  - **Viewer** (`ViewerHome.tsx`) : consultation seule — incidents, répartitions, évolution.
+- Design : bleu professionnel, surfaces blanches / gris clair, badges couleurs, KPI modernes, graphiques avec légendes, tableaux lisibles, formulaires structurés.
+
+### 13.2 Modules fonctionnels livrés
+
+- **Compte rendu d'intervention** (`/api/tickets/[id]/reports`, `ReportForm`) — statut `submitted`.
+- **Évaluation travail** (`/api/evaluations`, `EvaluationForm`) — décision `validated | to_correct | rejected`.
+- **Suivi paiements** (`/api/payments`, `PaymentForm`) — statut `validationStatus`, balance `max(0, planned - paid)`.
+
+### 13.3 Authentification / RBAC
+
+- `src/lib/auth.ts` : scrypt + JWT (HS256, cookie `ibn_session`, 8 h), rôles `admin | manager | agent | viewer`.
+- `src/proxy.ts` : routes protégées (`WRITE_APIS`, `PROTECTED_PAGES`), décodage JWT côté proxy.
+- Espace Manager peut désormais gérer (assigner / modifier) les tickets ; l'Espace Viewer est en **lecture seule**.
+
+### 13.4 Vérifications finales
+
+- `npx tsc --noEmit` : 0 erreur · `npm run lint` : 0 erreur · `npm run build` : OK
+- `node scripts/e2e-test.mjs` : **60/60 tests réussis**
+- `npx tsx scripts/check-db.ts`, `check-sla.ts`, `check-metrics.ts`, `check-gmail.ts`, `check-security.ts` : OK
+
+### 13.5 État
+
+- HEAD : `79f5b05` — refonte visuelle des 4 espaces (Admin / Manager / Agent / Viewer).
+- Base MySQL conservée : 98 tickets, 0 résidu, utilisateurs intacts.
