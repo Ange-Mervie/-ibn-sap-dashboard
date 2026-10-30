@@ -65,7 +65,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
     const currentSession = await getSession();
     if (!currentSession) redirect(`/login?from=${encodeURIComponent(`/tickets/${id}`)}`);
-    if (!canWrite(currentSession.role) && !canManage(currentSession.role)) redirect("/");
+    if (!canWrite(currentSession.role) && !canManage(currentSession.role) && currentSession.role !== "viewer") redirect("/");
 
     const status = String(formData.get("status") ?? "");
     const priority = String(formData.get("priority") ?? "");
@@ -153,7 +153,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
     const currentSession = await getSession();
     if (!currentSession) redirect(`/login?from=${encodeURIComponent(`/tickets/${id}`)}`);
-    if (!canWrite(currentSession.role) && !canManage(currentSession.role)) redirect("/");
+    if (!canWrite(currentSession.role) && !canManage(currentSession.role) && currentSession.role !== "viewer") redirect("/");
 
     const author = currentSession.name;
     const body = String(formData.get("body") ?? "").trim();
