@@ -30,6 +30,36 @@ export const SOURCES = ["excel", "form", "email"] as const;
 export const EMAIL_STATUSES = ["pending", "converted", "linked", "ignored"] as const;
 export const SYNC_OUTCOMES = ["ok", "error", "not_configured"] as const;
 
+// --- évaluations de travail (Partie 7) ---
+export const EVALUATION_DECISIONS = ["validated", "to_correct", "rejected"] as const;
+
+export const workEvaluations = mysqlTable(
+  "work_evaluations",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ticketId: varchar("ticket_id", { length: 32 })
+      .notNull()
+      .references(() => tickets.id),
+    reportId: int("report_id").notNull(),
+    agentId: varchar("agent_id", { length: 100 }).notNull(),
+    quality: int("quality").notNull().default(3),
+    deadlineRespect: boolean("deadline_respect").notNull().default(true),
+    solutionRelevance: int("solution_relevance").notNull().default(3),
+    autonomy: int("autonomy").notNull().default(3),
+    observations: text("observations").notNull().default(""),
+    decision: mysqlEnum("decision", EVALUATION_DECISIONS).notNull(),
+    evaluatedBy: varchar("evaluated_by", { length: 100 }).notNull(),
+    evaluatedAt: timestamp("evaluated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("work_evaluations_ticket").on(t.ticketId),
+    index("work_evaluations_agent").on(t.agentId),
+  ]
+);
+
+export type WorkEvaluation = typeof workEvaluations.$inferSelect;
+export type NewWorkEvaluation = typeof workEvaluations.$inferInsert;
+
 // --- comptes rendus d'intervention (Partie 6) ---
 export const REPORT_STATUSES = [
   "draft",

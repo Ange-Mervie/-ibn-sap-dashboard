@@ -1,17 +1,19 @@
 
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSession, canWrite } from "@/lib/auth";
 import SessionControls from "@/components/SessionControls";
 import ReportForm from "@/components/ReportForm";
+import EvaluationForm from "@/components/EvaluationForm";
 
 import { db } from "@/db";
 import {
   tickets,
   ticketEvents,
   ticketComments,
+  interventionReports,
   STATUTS,
   PRIORITES,
 } from "@/db/schema";
@@ -50,6 +52,12 @@ export default async function TicketDetailPage({ params }: PageProps) {
     .from(ticketEvents)
     .where(eq(ticketEvents.ticketId, id))
     .orderBy(desc(ticketEvents.changedAt));
+
+  const submittedReports = await db
+    .select()
+    .from(interventionReports)
+    .where(and(eq(interventionReports.ticketId, id), eq(interventionReports.status, "submitted")))
+    .orderBy(desc(interventionReports.createdAt));
 
   async function updateTicket(formData: FormData) {
     "use server";
@@ -371,6 +379,13 @@ export default async function TicketDetailPage({ params }: PageProps) {
               Déclarez l&apos;intervention réalisée sur ce ticket. Le compte rendu est enregistré puis, après soumission, transmis au manager pour validation.
             </p>
             <ReportForm ticketId={ticket.id} agentEmail={session.email} />
+          </section>
+        )}
+
+        {canEdit && (session.role === "admin" || session.role === "manager") && submittedReports[0] && (
+          <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="mb-5 text-lg font-bold">Évaluation du travail</h2>
+            <EvaluationForm ticketId={ticket.id} reportId={String(submittedReports[0].id)} agentId={submittedReports[0].agentId} />
           </section>
         )}
 
