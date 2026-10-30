@@ -7,6 +7,7 @@ import { getSession, canWrite } from "@/lib/auth";
 import SessionControls from "@/components/SessionControls";
 import ReportForm from "@/components/ReportForm";
 import EvaluationForm from "@/components/EvaluationForm";
+import PaymentForm from "@/components/PaymentForm";
 
 import { db } from "@/db";
 import {
@@ -386,6 +387,13 @@ export default async function TicketDetailPage({ params }: PageProps) {
           <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="mb-5 text-lg font-bold">Évaluation du travail</h2>
             <EvaluationForm ticketId={ticket.id} reportId={String(submittedReports[0].id)} agentId={submittedReports[0].agentId} />
+          </section>
+        )}
+
+        {canEdit && (session.role === "admin" || session.role === "manager") && submittedReports[0] && (
+          <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="mb-5 text-lg font-bold">Suivi des paiements</h2>
+            <PaymentForm ticketId={ticket.id} agentId={submittedReports[0].agentId} />
           </section>
         )}
 

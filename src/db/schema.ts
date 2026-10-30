@@ -30,6 +30,47 @@ export const SOURCES = ["excel", "form", "email"] as const;
 export const EMAIL_STATUSES = ["pending", "converted", "linked", "ignored"] as const;
 export const SYNC_OUTCOMES = ["ok", "error", "not_configured"] as const;
 
+// --- suivi des paiements (Partie 8) ---
+export const PAYMENT_STATUSES = [
+  "not_billable",
+  "to_pay",
+  "pending",
+  "partial",
+  "paid",
+] as const;
+
+export const workPayments = mysqlTable(
+  "work_payments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ticketId: varchar("ticket_id", { length: 32 })
+      .notNull()
+      .references(() => tickets.id),
+    agentId: varchar("agent_id", { length: 100 }).notNull(),
+    nature: varchar("nature", { length: 255 }).notNull().default(""),
+    amountPlanned: int("amount_planned").notNull().default(0),
+    amountPaid: int("amount_paid").notNull().default(0),
+    balance: int("balance").notNull().default(0),
+    interventionDate: date("intervention_date"),
+    validationStatus: mysqlEnum("validation_status", ["draft", "submitted", "under_review", "to_correct", "validated", "rejected"]).notNull().default("draft"),
+    paymentStatus: mysqlEnum("payment_status", PAYMENT_STATUSES).notNull().default("to_pay"),
+    paymentDate: date("payment_date"),
+    paymentMode: varchar("payment_mode", { length: 50 }).notNull().default(""),
+    transactionRef: varchar("transaction_ref", { length: 100 }).notNull().default(""),
+    proof: text("proof").notNull().default(""),
+    comment: text("comment").notNull().default(""),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  },
+  (t) => [
+    index("work_payments_ticket").on(t.ticketId),
+    index("work_payments_agent").on(t.agentId),
+  ]
+);
+
+export type WorkPayment = typeof workPayments.$inferSelect;
+export type NewWorkPayment = typeof workPayments.$inferInsert;
+
 // --- évaluations de travail (Partie 7) ---
 export const EVALUATION_DECISIONS = ["validated", "to_correct", "rejected"] as const;
 
