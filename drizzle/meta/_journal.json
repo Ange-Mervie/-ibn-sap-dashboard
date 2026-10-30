@@ -15,6 +15,13 @@
       "when": 1793293436588,
       "tag": "0001_add_users",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1793341494619,
+      "tag": "0002_elite_loa",
+      "breakpoints": true
     }
   ]
 }

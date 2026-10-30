@@ -5,6 +5,7 @@ import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSession, canWrite } from "@/lib/auth";
 import SessionControls from "@/components/SessionControls";
+import ReportForm from "@/components/ReportForm";
 
 import { db } from "@/db";
 import {
@@ -362,6 +363,16 @@ export default async function TicketDetailPage({ params }: PageProps) {
             </div>
           </form>
         </section>
+
+        {canEdit && (session.role === "admin" || ticket.assignee.toLowerCase().includes(session.email.toLowerCase())) && (
+          <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="mb-5 text-lg font-bold">Compte rendu d&apos;intervention</h2>
+            <p className="mb-4 text-sm text-zinc-500">
+              Déclarez l&apos;intervention réalisée sur ce ticket. Le compte rendu est enregistré puis, après soumission, transmis au manager pour validation.
+            </p>
+            <ReportForm ticketId={ticket.id} agentEmail={session.email} />
+          </section>
+        )}
 
         <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="mb-5 text-lg font-bold">

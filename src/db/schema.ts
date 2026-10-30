@@ -30,6 +30,16 @@ export const SOURCES = ["excel", "form", "email"] as const;
 export const EMAIL_STATUSES = ["pending", "converted", "linked", "ignored"] as const;
 export const SYNC_OUTCOMES = ["ok", "error", "not_configured"] as const;
 
+// --- comptes rendus d'intervention (Partie 6) ---
+export const REPORT_STATUSES = [
+  "draft",
+  "submitted",
+  "under_review",
+  "to_correct",
+  "validated",
+  "rejected",
+] as const;
+
 // --- rôles utilisateurs (MANAGER préparé pour évolution future) ---
 export const ROLES = ["admin", "agent", "viewer", "manager"] as const;
 export type Role = (typeof ROLES)[number];
@@ -109,6 +119,38 @@ export const ticketEvents = mysqlTable("ticket_events", {
   changedBy: varchar("changed_by", { length: 100 }).notNull().default("application"),
   changedAt: timestamp("changed_at").notNull().defaultNow(),
 });
+
+// --- comptes rendus d'intervention (Partie 6) ---
+export const interventionReports = mysqlTable(
+  "intervention_reports",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    ticketId: varchar("ticket_id", { length: 32 })
+      .notNull()
+      .references(() => tickets.id),
+    agentId: varchar("agent_id", { length: 100 }).notNull(),
+    status: mysqlEnum("status", REPORT_STATUSES).notNull().default("draft"),
+    interventionDate: date("intervention_date"),
+    nature: varchar("nature", { length: 255 }).notNull().default(""),
+    description: text("description").notNull().default(""),
+    actions: text("actions").notNull().default(""),
+    result: text("result").notNull().default(""),
+    advancement: varchar("advancement", { length: 100 }).notNull().default(""),
+    difficulties: text("difficulties").notNull().default(""),
+    remaining: text("remaining").notNull().default(""),
+    timeSpent: int("time_spent").notNull().default(0),
+    nextAction: varchar("next_action", { length: 255 }).notNull().default(""),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  },
+  (t) => [
+    index("intervention_reports_ticket").on(t.ticketId),
+    index("intervention_reports_agent").on(t.agentId),
+  ]
+);
+
+export type InterventionReport = typeof interventionReports.$inferSelect;
+export type NewInterventionReport = typeof interventionReports.$inferInsert;
 
 // --- e-mails candidats Gmail (staging) ---
 export const emailMessages = mysqlTable("email_messages", {

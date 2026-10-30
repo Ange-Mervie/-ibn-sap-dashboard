@@ -670,6 +670,11 @@ check("Navigation mobile visible en tablette", mobileNav);
 const realErrors = consoleErrors.filter(
   (e) => !e.includes("favicon") && !e.includes("Download the React DevTools")
 );
+  await page.goto("http://localhost:3000/tickets/11", { waitUntil: "networkidle0", timeout: 60000 });
+  // ---- 0c. Partie 6 : formulaire compte rendu ----
+  const reportForm = await page.$('[data-report-form]');
+  check("Partie 6 : formulaire compte rendu present (ticket 11, admin)", !!reportForm, "");
+
 check("Aucune erreur JS", realErrors.length === 0, realErrors.slice(0, 3).join(" | "));
 
 await browser.close();
