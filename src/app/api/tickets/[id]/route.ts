@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { tickets, ticketEvents, ticketComments, type Ticket } from "@/db/schema";
 import { jsonError } from "@/lib/db";
-import { getSession, canWrite, canAdmin } from "@/lib/auth";
+import { getSession, canWrite, canManage, canAdmin } from "@/lib/auth";
 import { validateTicketPatch } from "@/lib/validate";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -43,7 +43,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 export async function PATCH(req: Request, { params }: Ctx) {
   const session = await getSession();
   if (!session) return jsonError(401, "Non authentifié. Veuillez vous connecter.");
-  if (!canWrite(session.role)) return jsonError(403, "Accès refusé. Votre rôle ne permet pas la modification de tickets.");
+  if (!canWrite(session.role) && !canManage(session.role)) return jsonError(403, "Accès refusé. Votre rôle ne permet pas la modification de tickets.");
 
   const { id } = await params;
 

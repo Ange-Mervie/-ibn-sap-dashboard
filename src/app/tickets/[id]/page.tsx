@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getSession, canWrite } from "@/lib/auth";
+import { getSession, canWrite, canManage } from "@/lib/auth";
 import SessionControls from "@/components/SessionControls";
 import ReportForm from "@/components/ReportForm";
 import EvaluationForm from "@/components/EvaluationForm";
@@ -29,7 +29,7 @@ export const instant = false;
 export default async function TicketDetailPage({ params }: PageProps) {
   const session = await getSession();
   if (!session) redirect(`/login?from=${encodeURIComponent(`/tickets/${(await params).id}`)}`);
-  const canEdit = canWrite(session.role);
+  const canEdit = canWrite(session.role) || canManage(session.role);
   const { id } = await params;
 
   const [ticket] = await db
@@ -65,7 +65,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
     const currentSession = await getSession();
     if (!currentSession) redirect(`/login?from=${encodeURIComponent(`/tickets/${id}`)}`);
-    if (!canWrite(currentSession.role)) redirect("/");
+    if (!canWrite(currentSession.role) && !canManage(currentSession.role)) redirect("/");
 
     const status = String(formData.get("status") ?? "");
     const priority = String(formData.get("priority") ?? "");
@@ -153,7 +153,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
     const currentSession = await getSession();
     if (!currentSession) redirect(`/login?from=${encodeURIComponent(`/tickets/${id}`)}`);
-    if (!canWrite(currentSession.role)) redirect("/");
+    if (!canWrite(currentSession.role) && !canManage(currentSession.role)) redirect("/");
 
     const author = currentSession.name;
     const body = String(formData.get("body") ?? "").trim();
