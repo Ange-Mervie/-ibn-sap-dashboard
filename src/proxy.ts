@@ -23,6 +23,7 @@ const PROTECTED_PAGES = [
   /^\/tickets$/,
   /^\/emails/,
   /^\/admin/,
+  /^\/demo\//,
 ];
 
 // Nom du cookie de session (doit correspondre à src/lib/auth.ts)

@@ -114,6 +114,16 @@ const loggedInOk = await page.evaluate(async () => {
 });
 check("E2E login ADMIN OK", loggedInOk.status === 200 && loggedInOk.role === "admin", JSON.stringify(loggedInOk));
 
+// ---- 0b. Démo : /demo/dashboard ----
+await page.goto("http://localhost:3000/demo/dashboard", { waitUntil: "networkidle0", timeout: 60000 });
+const demoKpi = await page.evaluate(() => [...document.querySelectorAll(".text-2xl.font-bold")].map((e) => e.textContent?.trim()));
+check("Démo /demo/dashboard : KPI rendus (98)", demoKpi.some((t) => t === "98"), JSON.stringify(demoKpi.slice(0, 4)));
+
+// ---- 0b-2. Démo : /demo/tickets ----
+await page.goto("http://localhost:3000/demo/tickets", { waitUntil: "networkidle0", timeout: 60000 });
+const demoTicketsText = await page.evaluate(() => document.body.innerText);
+check("Démo /demo/tickets : formulaire création visible", demoTicketsText.includes("Créer le ticket"), "");
+
 await page.goto(URL, { waitUntil: "networkidle0", timeout: 60000 });
 
 // ---- 1. KPI initiaux ----
