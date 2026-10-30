@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users } from "lucide-react";
+import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users, Bell } from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
-import { STATUSES, PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY } from "@/lib/issues";
+import { STATUSES, PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY, isOpen } from "@/lib/issues";
 import Overview from "./Overview";
 import IssueTable from "./IssueTable";
 import Analysis from "./Analysis";
@@ -36,6 +36,7 @@ export default function Dashboard({
   // ==========================================================
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [activeSection, setActiveSection] = useState("overview");
+  const [notifOpen, setNotifOpen] = useState(false);
 
   // Listes des filtres déroulants (à partir des données)
   const modules = useMemo(
@@ -65,6 +66,19 @@ export default function Dashboard({
 
   const chips = filterChips(filters);
   const filtersActive = chips.length > 0;
+
+  // Zone notifications : synchronisation Gmail + tickets critiques / à haut risque
+  const notifications = useMemo(() => {
+    const list: { id: string; title: string; body: string; href: string }[] = [];
+    if (syncNote) {
+      list.push({ id: "sync", title: "Synchronisation Gmail", body: `Dernière synchronisation : ${syncNote.outcome} — ${syncNote.detail}`, href: "/emails" });
+    }
+    const criticalOpen = filtered.filter((i) => isOpen(i) && (i.priority === "Critical" || i.priority === "High")).length;
+    if (criticalOpen > 0) {
+      list.push({ id: "critical", title: "Tickets critiques / à haut risque", body: `${criticalOpen} ticket(s) Critical/High encore ouverts avec les filtres actifs.`, href: "#tracking" });
+    }
+    return list;
+  }, [syncNote, filtered]);
 
   // Clic sur un élément d'un graphique / d'une légende = bascule du filtre
   function toggleFilter(dim: DimKey, value: string) {
@@ -149,6 +163,43 @@ export default function Dashboard({
                 <PlusCircle size={15} /> Nouveau ticket
               </Link>}
               {canAccessGmail && <Link href="/emails" className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Gmail</Link>}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setNotifOpen((v) => !v)}
+                  aria-label="Notifications"
+                  className="relative rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-700 hover:bg-zinc-50"
+                >
+                  <Bell size={16} />
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-zinc-200 bg-white shadow-lg">
+                    <div className="border-b border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-900">Notifications</div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="px-3 py-4 text-sm text-zinc-400">Aucune notification.</p>
+                      ) : (
+                        notifications.map((n) => (
+                          <a
+                            key={n.id}
+                            href={n.href}
+                            onClick={() => setNotifOpen(false)}
+                            className="block border-b border-zinc-100 px-3 py-3 hover:bg-zinc-50"
+                          >
+                            <p className="text-sm font-medium text-zinc-900">{n.title}</p>
+                            <p className="mt-0.5 text-xs text-zinc-500">{n.body}</p>
+                          </a>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               {user.role === "admin" && <Link href="/admin" className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"><Users size={15} /> Utilisateurs</Link>}
               <SessionControls user={user} />
             </div>
