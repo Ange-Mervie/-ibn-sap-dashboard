@@ -34,7 +34,7 @@ function KpiCard({
 }
 
 // ---------- regroupement par mois (avec bornes ISO pour le filtre de période) ----------
-function monthlyTimeline(issues: Issue[]) {
+export function monthlyTimeline(issues: Issue[]) {
   const months = new Map<
     string,
     { month: string; ouverts: number; clotures: number; from: string; to: string }
