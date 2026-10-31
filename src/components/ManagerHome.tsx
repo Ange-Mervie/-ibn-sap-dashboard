@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { AlertTriangle, Hourglass, Layers, Users } from "lucide-react";
+import type { Issue } from "@/lib/issues";
 import { isOpen, ageDays } from "@/lib/issues";
 import { Panel } from "./Charts";
 import KpiCard from "./KpiCard";
@@ -77,6 +78,57 @@ export default function ManagerHome(props: HomeProps) {
           </ul>
         </Panel>
       </div>
+
+      <Panel title="Performance de l'équipe">
+        <AgentPerformance issues={open} />
+      </Panel>
     </>
+  );
+}
+
+function AgentPerformance({ issues }: { issues: Issue[] }) {
+  const rows = useMemo(() => {
+    const map = new Map<string, { assignee: string; open: number; critical: number; closed: number }>();
+    for (const i of issues) {
+      const key = i.assignee || "Non assigné";
+      const cur = map.get(key) ?? { assignee: key, open: 0, critical: 0, closed: 0 };
+      if (isOpen(i)) {
+        cur.open += 1;
+        if (i.priority === "Critical" || i.priority === "High") cur.critical += 1;
+      } else {
+        cur.closed += 1;
+      }
+      map.set(key, cur);
+    }
+    return [...map.values()].sort((a, b) => b.open - a.open);
+  }, [issues]);
+
+  if (rows.length === 0) {
+    return <p className="py-6 text-center text-sm text-zinc-400">Aucune donnée d&apos;activité par agent.</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+          <tr>
+            <th className="px-3 py-2 font-medium">Agent</th>
+            <th className="px-3 py-2 font-medium">En cours</th>
+            <th className="px-3 py-2 font-medium">Critiques / à haut risque</th>
+            <th className="px-3 py-2 font-medium">Clôturés</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100">
+          {rows.map((r) => (
+            <tr key={r.assignee} className="hover:bg-zinc-50">
+              <td className="px-3 py-2 font-medium text-zinc-900">{r.assignee}</td>
+              <td className="px-3 py-2 text-zinc-600">{r.open}</td>
+              <td className="px-3 py-2 text-zinc-600">{r.critical}</td>
+              <td className="px-3 py-2 text-zinc-600">{r.closed}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
