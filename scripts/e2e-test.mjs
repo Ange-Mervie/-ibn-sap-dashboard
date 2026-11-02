@@ -146,24 +146,6 @@ const sidebarVisible = await page.evaluate(() => {
 });
 check("Barre latérale visible (desktop)", sidebarVisible);
 
-// ---- 4. Filtre statut = Closed ----
-await page.select("header select:nth-of-type(1)", "Closed").catch(() => {});
-// le 1er select est bien le statut
-const selects = await page.$$("header select");
-await selects[0].select("Closed");
-await new Promise((r) => setTimeout(r, 400));
-const afterFilter = await page.evaluate(() =>
-  [...document.querySelectorAll(".text-2xl.font-bold")].map((e) => e.textContent?.trim())
-);
-check("Filtre statut=Closed → Total 56", afterFilter.includes("56"), JSON.stringify(afterFilter));
-
-// le tableau est aussi filtré
-const tableCount = await page.evaluate(() => {
-  const m = document.body.innerText.match(/(\d+) ticket\(s\) correspondant/);
-  return m ? Number(m[1]) : -1;
-});
-check("Tableau filtré → 56 tickets", tableCount === 56, `affichés: ${tableCount}`);
-
 // ---- 5. Réinitialiser ----
 const resetBtns = await page.$$("button");
 for (const b of resetBtns) {
@@ -296,7 +278,7 @@ const t13 = await tableRows();
 check("PBI Tableau mis à jour → 16 tickets", t13 === 16, `affichés: ${t13}`);
 
 // le filtre d'en-tête est synchronisé (même état global)
-const selPriority = await page.evaluate(() => document.querySelectorAll("header select")[1].value);
+const selPriority = await page.evaluate(() => document.querySelectorAll("header select")[0].value);
 check("PBI Filtre en-tête synchronisé (priorité = Critical)", selPriority === "Critical", selPriority);
 
 // une sélection active est visible
@@ -341,11 +323,16 @@ check("PBI Filtre statut visible (chip « Statut : Closed »)", chipClosed);
 await clickReset();
 
 // ---- 16. Combinaison sans résultat → message clair ----
-// Critical (graphe) + Not Started (en-tête) = 0 ticket
+// Critical (graphe) + periode vide = 0 ticket
 await clickCat("priority", "Critical");
 await sleep(400);
-const pbiSelects = await page.$$("header select");
-await pbiSelects[0].select("Not Started");
+await page.evaluate(() => {
+  const els = document.querySelectorAll('input[aria-label*="ouverture"]');
+  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+  const setVal = (el, v) => { if (setter) { setter.call(el, v); el.dispatchEvent(new Event("input", { bubbles: true })); } };
+  if (els[0]) setVal(els[0], "2020-01-01");
+  if (els[1]) setVal(els[1], "2020-12-31");
+});
 await sleep(500);
 const k16 = await kpiValues();
 check("PBI Combinaison vide → Total = 0", k16[0] === "0", JSON.stringify(k16));

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users, Bell, Menu } from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
-import { STATUSES, PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY, isOpen } from "@/lib/issues";
+import { PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY, isOpen } from "@/lib/issues";
 import IssueTable from "./IssueTable";
 import Analysis from "./Analysis";
 import SessionControls from "./SessionControls";
@@ -289,17 +289,6 @@ export default function Dashboard({
             <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-600">
               <Filter size={15} /> Filtres
             </span>
-            <select
-              aria-label="Filtrer par statut"
-              value={filters.status}
-              onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
-              className={selectClass}
-            >
-              <option value="">Tous les statuts</option>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
             <select
               aria-label="Filtrer par priorité"
               value={filters.priority}
