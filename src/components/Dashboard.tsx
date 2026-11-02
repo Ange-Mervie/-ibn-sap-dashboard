@@ -285,7 +285,7 @@ export default function Dashboard({
           </div>
 
           {/* Filtres globaux combinables (statut, priorité, module, paiement, période) */}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-600">
               <Filter size={15} /> Filtres
             </span>
@@ -324,24 +324,6 @@ export default function Dashboard({
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
-            <span className="flex items-center gap-1.5 text-xs text-zinc-500">
-              Ouvert entre
-              <input
-                type="date"
-                aria-label="Date d'ouverture début"
-                value={filters.from}
-                onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))}
-                className={inputClass}
-              />
-              et
-              <input
-                type="date"
-                aria-label="Date d'ouverture fin"
-                value={filters.to}
-                onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))}
-                className={inputClass}
-              />
-            </span>
             <button
               onClick={resetFilters}
               disabled={!filtersActive}

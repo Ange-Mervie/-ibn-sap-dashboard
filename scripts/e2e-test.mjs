@@ -324,16 +324,10 @@ await clickReset();
 
 // ---- 16. Combinaison sans résultat → message clair ----
 // Critical (graphe) + periode vide = 0 ticket
+await clickCat("module", "BLANK");
+await sleep(400);
 await clickCat("priority", "Critical");
 await sleep(400);
-await page.evaluate(() => {
-  const els = document.querySelectorAll('input[aria-label*="ouverture"]');
-  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-  const setVal = (el, v) => { if (setter) { setter.call(el, v); el.dispatchEvent(new Event("input", { bubbles: true })); } };
-  if (els[0]) setVal(els[0], "2020-01-01");
-  if (els[1]) setVal(els[1], "2020-12-31");
-});
-await sleep(500);
 const k16 = await kpiValues();
 check("PBI Combinaison vide → Total = 0", k16[0] === "0", JSON.stringify(k16));
 const emptyMsg = await page.evaluate(() =>
