@@ -324,7 +324,7 @@ await clickReset();
 
 // ---- 16. Combinaison sans résultat → message clair ----
 // Critical (graphe) + periode vide = 0 ticket
-await clickCat("module", "BLANK");
+await clickCat("module", "FI_FM");
 await sleep(400);
 await clickCat("priority", "Critical");
 await sleep(400);

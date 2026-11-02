@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getSession, canWrite, canManage } from "@/lib/auth";
+import { getSession, canManage } from "@/lib/auth";
+import { canReadTicket, canWriteTickets, canCreateReports } from "@/lib/access";
 import SessionControls from "@/components/SessionControls";
 import ReportForm from "@/components/ReportForm";
 import EvaluationForm from "@/components/EvaluationForm";
@@ -29,7 +30,6 @@ export const instant = false;
 export default async function TicketDetailPage({ params }: PageProps) {
   const session = await getSession();
   if (!session) redirect(`/login?from=${encodeURIComponent(`/tickets/${(await params).id}`)}`);
-  const canEdit = canWrite(session.role) || canManage(session.role);
   const { id } = await params;
 
   const [ticket] = await db
@@ -41,6 +41,9 @@ export default async function TicketDetailPage({ params }: PageProps) {
   if (!ticket) {
     notFound();
   }
+  if (!canReadTicket(session.role, ticket.assignee, session.email)) notFound();
+  const canEditThisTicket = canWriteTickets(session.role, ticket.assignee, session.email);
+  const canCreateReport = canCreateReports(session.role, ticket.assignee, session.email);
 
   const comments = await db
     .select()
@@ -65,7 +68,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
     const currentSession = await getSession();
     if (!currentSession) redirect(`/login?from=${encodeURIComponent(`/tickets/${id}`)}`);
-    if (!canWrite(currentSession.role) && !canManage(currentSession.role) && currentSession.role !== "viewer") redirect("/");
+    if (!canWriteTickets(currentSession.role, ticket.assignee, currentSession.email)) redirect("/");
 
     const status = String(formData.get("status") ?? "");
     const priority = String(formData.get("priority") ?? "");
@@ -92,6 +95,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
     if (!current) {
       notFound();
     }
+    if (!canWriteTickets(currentSession.role, current.assignee, currentSession.email)) redirect("/");
 
     const changes = [
       {
@@ -153,7 +157,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
     const currentSession = await getSession();
     if (!currentSession) redirect(`/login?from=${encodeURIComponent(`/tickets/${id}`)}`);
-    if (!canWrite(currentSession.role) && !canManage(currentSession.role) && currentSession.role !== "viewer") redirect("/");
+    if (!canWriteTickets(currentSession.role, ticket.assignee, currentSession.email)) redirect("/");
 
     const author = currentSession.name;
     const body = String(formData.get("body") ?? "").trim();
@@ -167,7 +171,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
     }
 
     const [current] = await db
-      .select({ id: tickets.id })
+      .select({ id: tickets.id, assignee: tickets.assignee })
       .from(tickets)
       .where(eq(tickets.id, id))
       .limit(1);
@@ -175,6 +179,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
     if (!current) {
       notFound();
     }
+    if (!canWriteTickets(currentSession.role, current.assignee, currentSession.email)) redirect("/");
 
     await db.transaction(async (tx) => {
       await tx.insert(ticketComments).values({
@@ -227,7 +232,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
             </h1>
 
             <p className="mt-1 text-sm text-zinc-500">
-              {canEdit ? "Consulte et modifie les informations de ce ticket SAP." : "Consultation du ticket SAP."}
+              {canEditThisTicket ? "Consulte et modifie les informations de ce ticket SAP." : "Consultation du ticket SAP."}
             </p>
           </div>
 
@@ -260,7 +265,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
                   id="status"
                   name="status"
                   defaultValue={ticket.status}
-                  disabled={!canEdit}
+                  disabled={!canEditThisTicket}
                   required
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 text-sm"
                 >
@@ -284,7 +289,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
                   id="priority"
                   name="priority"
                   defaultValue={ticket.priority}
-                  disabled={!canEdit}
+                  disabled={!canEditThisTicket}
                   required
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 text-sm"
                 >
@@ -308,7 +313,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
                   id="assignee"
                   name="assignee"
                   defaultValue={ticket.assignee}
-                  readOnly={!canEdit}
+                  readOnly={!canEditThisTicket}
                   maxLength={100}
                   className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
                   placeholder="Nom du responsable"
@@ -327,7 +332,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
                   id="module"
                   name="module"
                   defaultValue={ticket.module}
-                  readOnly={!canEdit}
+                  readOnly={!canEditThisTicket}
                   maxLength={50}
                   className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
                   placeholder="Ex. FI, MM, SD..."
@@ -347,7 +352,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
                 id="description"
                 name="description"
                 defaultValue={ticket.description}
-                readOnly={!canEdit}
+                readOnly={!canEditThisTicket}
                 required
                 rows={5}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-3 text-sm"
@@ -356,7 +361,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
             </div>
 
             <div className="flex flex-wrap gap-3 border-t border-zinc-100 pt-5">
-              {canEdit && <button
+              {canEditThisTicket && <button
                 type="submit"
                 className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800"
               >
@@ -373,7 +378,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
           </form>
         </section>
 
-        {canEdit && (session.role === "admin" || ticket.assignee.toLowerCase().includes(session.email.toLowerCase())) && (
+        {canCreateReport && (
           <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="mb-5 text-lg font-bold">Compte rendu d&apos;intervention</h2>
             <p className="mb-4 text-sm text-zinc-500">
@@ -383,14 +388,14 @@ export default async function TicketDetailPage({ params }: PageProps) {
           </section>
         )}
 
-        {canEdit && (session.role === "admin" || session.role === "manager") && submittedReports[0] && (
+        {canManage(session.role) && submittedReports[0] && (
           <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="mb-5 text-lg font-bold">Évaluation du travail</h2>
             <EvaluationForm ticketId={ticket.id} reportId={String(submittedReports[0].id)} agentId={submittedReports[0].agentId} />
           </section>
         )}
 
-        {canEdit && (session.role === "admin" || session.role === "manager") && submittedReports[0] && (
+        {canManage(session.role) && submittedReports[0] && (
           <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="mb-5 text-lg font-bold">Suivi des paiements</h2>
             <PaymentForm ticketId={ticket.id} agentId={submittedReports[0].agentId} />
@@ -454,10 +459,10 @@ export default async function TicketDetailPage({ params }: PageProps) {
 
         <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="mb-5 text-lg font-bold">
-            {canEdit ? "Commentaires" : "Commentaires"}
+            {canEditThisTicket ? "Commentaires" : "Commentaires"}
           </h2>
 
-          {canEdit && <form data-comment-form action={addComment} className="space-y-4">
+          {canEditThisTicket && <form data-comment-form action={addComment} className="space-y-4">
             <p className="text-sm text-zinc-500">Commentaire ajouté sous le nom de {session.name}.</p>
 
             <div>

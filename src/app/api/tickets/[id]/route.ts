@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { tickets, ticketEvents, ticketComments, type Ticket } from "@/db/schema";
 import { jsonError } from "@/lib/db";
 import { getSession, canWrite, canManage, canAdmin } from "@/lib/auth";
-import { canReadTicket } from "@/lib/access";
+import { canReadTicket, canWriteTickets } from "@/lib/access";
 import { validateTicketPatch } from "@/lib/validate";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -71,6 +71,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
   if (!existing[0]) {
     return jsonError(404, `Ticket introuvable : ${id}`);
+  }
+  if (!canWriteTickets(session.role, existing[0].assignee, session.email)) {
+    return jsonError(403, "Accès refusé. Vous ne pouvez pas modifier ce ticket.");
   }
 
   const changes: { field: string; oldValue: string; newValue: string }[] = [

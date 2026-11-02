@@ -1,10 +1,10 @@
 // API comptes rendus d'intervention — /api/tickets/[id]/reports
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { tickets, interventionReports, ticketEvents, REPORT_STATUSES } from "@/db/schema";
 import { getSession } from "@/lib/auth";
-import { canCreateReports, sameIdentity } from "@/lib/access";
+import { canCreateReports, canReadTicket } from "@/lib/access";
 import { jsonError } from "@/lib/db";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -16,15 +16,15 @@ function isReportStatus(v: unknown): v is (typeof REPORT_STATUSES)[number] {
 export async function GET(_req: Request, { params }: Ctx) {
   const session = await getSession();
   if (!session) return jsonError(401, "Non authentifié.");
-  if (session.role === "viewer") return jsonError(403, "Accès refusé. Rôle consultation uniquement.");
 
   const { id } = await params;
   const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
   if (!ticket) return jsonError(404, "Ticket introuvable.");
-  if (session.role === "agent" && !sameIdentity(ticket.assignee, session.email)) return jsonError(403, "Accès refusé.");
+  if (!canReadTicket(session.role, ticket.assignee, session.email)) return jsonError(403, "Accès refusé.");
 
   const predicates = [eq(interventionReports.ticketId, id)];
-  if (session.role === "agent") predicates.push(eq(interventionReports.agentId, session.email));
+  if (session.role === "agent") predicates.push(eq(sql`lower(trim(${interventionReports.agentId}))`, session.email.trim().toLowerCase()));
+  if (session.role === "viewer") predicates.push(eq(interventionReports.status, "validated"));
   const reports = await db
     .select()
     .from(interventionReports)

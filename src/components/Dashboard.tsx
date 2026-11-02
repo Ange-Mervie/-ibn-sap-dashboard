@@ -19,7 +19,7 @@ import type { HomeProps } from "./homeProps";
 // Sections de navigation (mobile)
 const SECTIONS = [
   { id: "overview", label: "Vue générale", icon: LayoutDashboard },
-  { id: "tracking", label: "Suivi des incidents", icon: Table2 },
+  { id: "tracking", label: "Suivi", icon: Table2 },
   { id: "analysis", label: "Analyse", icon: BarChart3 },
 ];
 
