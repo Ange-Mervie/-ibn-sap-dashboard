@@ -193,7 +193,7 @@ export default function Dashboard({
       {/* ============ EN-TÊTE : titre, période, mise à jour ============ */}
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-[1500px] px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <div>
               <h1 className="text-base font-bold text-zinc-900">
                 IBN GROUP SARL — Suivi des incidents SAP
