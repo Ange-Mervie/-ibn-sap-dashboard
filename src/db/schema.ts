@@ -268,3 +268,31 @@ export type TicketEvent = typeof ticketEvents.$inferSelect;
 export type TicketComment = typeof ticketComments.$inferSelect;
 export type EmailMessage = typeof emailMessages.$inferSelect;
 export type SyncRun = typeof syncRuns.$inferSelect;
+
+export const notifications = mysqlTable('notifications', { id: int('id').autoincrement().primaryKey(), userId: int('user_id').notNull(), type: varchar('type', { length: 50 }).notNull(), message: text('message').notNull(), read: boolean('read').notNull().default(false), createdAt: timestamp('created_at').notNull().defaultNow() });
+export type Notification = typeof notifications.$inferSelect;
+
+
+export const deadlineRequests = mysqlTable('deadline_requests', { id: int('id').autoincrement().primaryKey(), ticketId: varchar('ticket_id', { length: 32 }).notNull(), requestedBy: int('requested_by').notNull(), newDueDate: date('new_due_date').notNull(), reason: text('reason').notNull().default(''), status: varchar('status', { length: 20 }).notNull().default('pending'), createdAt: timestamp('created_at').notNull().defaultNow() });
+export type DeadlineRequest = typeof deadlineRequests.$inferSelect;
+
+
+export const attachments = mysqlTable('attachments', { id: int('id').autoincrement().primaryKey(), ticketId: varchar('ticket_id', { length: 32 }).notNull(), uploadedBy: int('uploaded_by').notNull(), fileName: varchar('file_name', { length: 255 }).notNull(), url: text('url').notNull(), createdAt: timestamp('created_at').notNull().defaultNow() });
+export type Attachment = typeof attachments.$inferSelect;
+
+
+export const ticketTags = mysqlTable('ticket_tags', { id: int('id').autoincrement().primaryKey(), ticketId: varchar('ticket_id', { length: 32 }).notNull(), tag: varchar('tag', { length: 50 }).notNull() });
+export type TicketTag = typeof ticketTags.$inferSelect;
+
+
+export const ticketDependencies = mysqlTable('ticket_dependencies', { id: int('id').autoincrement().primaryKey(), ticketId: varchar('ticket_id', { length: 32 }).notNull(), dependsOnId: varchar('depends_on_id', { length: 32 }).notNull() });
+export type TicketDependency = typeof ticketDependencies.$inferSelect;
+
+
+export const recurringTasks = mysqlTable('recurring_tasks', { id: int('id').autoincrement().primaryKey(), templateTicketId: varchar('template_ticket_id', { length: 32 }).notNull(), frequency: varchar('frequency', { length: 20 }).notNull(), nextRun: timestamp('next_run').notNull(), active: boolean('active').notNull().default(true) });
+export type RecurringTask = typeof recurringTasks.$inferSelect;
+
+
+export const taskTemplates = mysqlTable('task_templates', { id: int('id').autoincrement().primaryKey(), name: varchar('name', { length: 150 }).notNull(), title: varchar('title', { length: 255 }).notNull(), nature: varchar('nature', { length: 100 }).notNull().default(''), priority: varchar('priority', { length: 20 }).notNull().default('Medium'), createdAt: timestamp('created_at').notNull().defaultNow() });
+export type TaskTemplate = typeof taskTemplates.$inferSelect;
+
