@@ -15,7 +15,7 @@ const OVERDUE_AFTER_DAYS = 30;
 const PAYMENT_LABEL: Record<string, string> = {
   to_pay: "En attente",
   pending: "À vérifier",
-  partial: "Partiel",
+  partial: "Partiellement payé",
   paid: "Payé",
   not_billable: "Non facturable",
 };
@@ -141,6 +141,7 @@ export default function ManagerHome(props: HomeProps) {
                     <th className="px-3 py-2 font-medium">Solde</th>
                     <th className="px-3 py-2 font-medium">Date paiement</th>
                     <th className="px-3 py-2 font-medium">Référence</th>
+                    <th className="px-3 py-2 font-medium">Date réalisation</th>
                     <th className="px-3 py-2 font-medium">Statut</th>
                     <th className="px-3 py-2 font-medium">Preuve</th>
                   </tr>
@@ -156,13 +157,14 @@ export default function ManagerHome(props: HomeProps) {
                       <td className="px-3 py-2 text-zinc-600">{p.amountPlanned - p.amountPaid}</td>
                       <td className="px-3 py-2 text-zinc-600">{p.paymentDate ? new Date(String(p.paymentDate)).toLocaleDateString("fr-FR") : "—"}</td>
                       <td className="px-3 py-2 text-zinc-600">{p.transactionRef || "—"}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.interventionDate ? new Date(String(p.interventionDate)).toLocaleDateString("fr-FR") : "—"}</td>
                       <td className="px-3 py-2 text-zinc-600">{PAYMENT_LABEL[p.paymentStatus] ?? p.paymentStatus}</td>
                       <td className="px-3 py-2 text-zinc-600">{p.proof || "—"}</td>
                     </tr>
                   ))}
                   {payments.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-3 py-6 text-center text-sm text-zinc-400">Aucun paiement enregistré pour ce ticket.</td>
+                      <td colSpan={11} className="px-3 py-6 text-center text-sm text-zinc-400">Aucun paiement enregistré pour ce ticket.</td>
                     </tr>
                   ) : null}
                 </tbody>

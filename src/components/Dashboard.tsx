@@ -399,7 +399,7 @@ export default function Dashboard({
       )}
 
 
-      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 lg:pl-64">
+      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 lg:pl-52">
         {/* ============ BARRE LATÉRALE (navigation par rôle) ============ */}
         <Sidebar
           items={navItems}
@@ -436,10 +436,10 @@ export default function Dashboard({
             <Analysis
               issues={filtered}
               controls={data.controls}
-              source={data.source}
               charts={charts}
               filters={filters}
               onToggle={toggleFilter}
+              role={user.role}
             />
           </section>
         </main>

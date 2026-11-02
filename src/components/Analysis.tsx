@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import type { Issue, IssueData, Filters, DimKey } from "@/lib/issues";
 import { isOpen, ageDays, resolutionDays, countBy, PRIORITIES } from "@/lib/issues";
-import { Panel, ChartBox, CountBars, HorizontalBars, PAYMENT_COLORS, PRIORITY_COLORS } from "./Charts";
+import { Panel, ChartBox, CountBars, HorizontalBars, StatusPie, TimelineBars, PAYMENT_COLORS, PRIORITY_COLORS } from "./Charts";
 import SectionHeader from "./SectionHeader";
 
 // Distribution des délais de résolution (en jours)
@@ -19,19 +19,22 @@ const DELAY_BUCKETS = [
 export default function Analysis({
   issues,
   controls,
-  source,
   charts,
   filters,
   onToggle,
+  role,
 }: {
   issues: Issue[];
   controls: IssueData["controls"];
-  source: string;
   // Données par graphique (chaque dimension exclue de son propre filtre)
   charts: { priority: Issue[]; module: Issue[]; payment: Issue[] };
   filters: Filters;
   onToggle: (dim: DimKey, value: string) => void;
+  role?: string;
 }) {
+  const isManager = role === "manager";
+  const isAgent = role === "agent";
+  const isViewer = role === "viewer";
   const open = useMemo(() => issues.filter(isOpen), [issues]);
   const closed = useMemo(() => issues.filter((i) => !isOpen(i)), [issues]);
 
@@ -67,6 +70,74 @@ export default function Analysis({
     () => open.filter((i) => ["Blocked", "On Hold", "waiting for Customer"].includes(i.status)),
     [open]
   );
+
+  const managerAgeing = useMemo(() => {
+    const buckets = [
+      { name: "Moins de 30 j", value: 0 },
+      { name: "De 30 a 90 j", value: 0 },
+      { name: "Plus de 90 j", value: 0 },
+    ];
+    for (const i of open) {
+      const a = ageDays(i);
+      if (a === null) continue;
+      if (a < 30) buckets[0].value += 1;
+      else if (a < 90) buckets[1].value += 1;
+      else buckets[2].value += 1;
+    }
+    return buckets;
+  }, [open]);
+
+  const managerByAgent = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of open) {
+      const key = i.assignee || "Non assigne";
+      m.set(key, (m.get(key) ?? 0) + 1);
+    }
+    return [...m.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [open]);
+
+  const agentByStatus = useMemo(() => countBy(issues, "status"), [issues]);
+  const agentMonthlyClosed = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of issues) {
+      if (!i.closeDate) continue;
+      const k = i.closeDate.slice(0, 7);
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return [...m.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [issues]);
+
+  const viewerMonthly = useMemo(() => {
+    const m = new Map<string, { month: string; ouverts: number; clotures: number; from: string; to: string }>();
+    const key = (iso: string) => iso.slice(0, 7);
+    const lastDay = (m0: string) => {
+      const [y, mo] = m0.split("-").map(Number);
+      const d = new Date(y, mo, 0).getDate();
+      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    };
+    for (const i of issues) {
+      if (i.openDate) {
+        const k = key(i.openDate);
+        const cur = m.get(k) ?? { month: k, ouverts: 0, clotures: 0, from: `${k}-01`, to: lastDay(k) };
+        cur.ouverts += 1;
+        m.set(k, cur);
+      }
+      if (i.closeDate) {
+        const k = key(i.closeDate);
+        const cur = m.get(k) ?? { month: k, ouverts: 0, clotures: 0, from: `${k}-01`, to: lastDay(k) };
+        cur.clotures += 1;
+        m.set(k, cur);
+      }
+    }
+    return [...m.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, v]) => v);
+  }, [issues]);
 
   // Paiement (NE PAS confondre avec le statut de résolution)
   const paymentData = useMemo(() => {
@@ -285,6 +356,39 @@ export default function Analysis({
           </ChartBox>
         </Panel>
       </div>
+
+      {isManager ? (
+        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Panel title="Ancienneté des incidents (récents / à surveiller / en retard)">
+            <CountBars data={managerAgeing} color="#2563eb" />
+          </Panel>
+          <Panel title="Tickets en cours par agent responsable">
+            <HorizontalBars data={managerByAgent} color="#2563eb" />
+          </Panel>
+        </div>
+      ) : null}
+
+      {isAgent ? (
+        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Panel title="Mes tickets par statut">
+            <StatusPie data={agentByStatus} />
+          </Panel>
+          <Panel title="Mes interventions réalisées par période">
+            <CountBars data={agentMonthlyClosed} color="#2563eb" />
+          </Panel>
+        </div>
+      ) : null}
+
+      {isViewer ? (
+        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Panel title="Évolution globale des incidents (ouverts vs clôturés)">
+            <TimelineBars data={viewerMonthly} />
+          </Panel>
+          <Panel title="Comparaison des statuts">
+            <StatusPie data={agentByStatus} />
+          </Panel>
+        </div>
+      ) : null}
 
       {/* ============ POINTS D'ATTENTION ============ */}
       <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-zinc-900">
