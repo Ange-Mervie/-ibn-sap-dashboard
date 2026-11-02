@@ -3,7 +3,6 @@ import { loadIssueDataFromDb } from "@/lib/loadDb";
 import { lastSync } from "@/lib/gmail/sync";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Banner from "@/components/Banner";
 import Dashboard from "@/components/Dashboard";
 
 // Route de démonstration — données dynamiques (ancienneté)
@@ -21,7 +20,6 @@ export default async function DemoDashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <Banner />
       <Dashboard data={data} syncNote={syncNote} user={user} />
     </div>
   );

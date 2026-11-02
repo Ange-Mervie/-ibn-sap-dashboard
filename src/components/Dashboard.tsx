@@ -71,13 +71,7 @@ export default function Dashboard({
   const [notifOpen, setNotifOpen] = useState(false);
 
   // Listes des filtres déroulants (à partir des données)
-  // Espace agent : seuls les tickets assignés à l'utilisateur connecté sont visibles
-  const visibleIssues = useMemo(() => {
-    const base = user.role === "agent" ? data.issues.filter((i) => i.assignee) : data.issues;
-    if (user.role !== "agent") return base;
-    const email = user.email.trim().toLowerCase();
-    return base.filter((i) => i.assignee && i.assignee.toLowerCase().includes(email));
-  }, [data.issues, user]);
+  const visibleIssues = data.issues;
 
   const modules = useMemo(
     () => [...new Set(visibleIssues.map((i) => i.module).filter(Boolean))].sort(),
@@ -202,6 +196,26 @@ export default function Dashboard({
                 {data.period.to.split("-").reverse().join("/")} · Dernière actualisation : {data.lastUpdate}
               </p>
             </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleNavSelect("tracking");
+              }}
+              className="flex items-center"
+            >
+              <input
+                type="search"
+                name="q"
+                placeholder="Rechercher un incident…"
+                className="w-56 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Rechercher
+              </button>
+            </form>
             <div className="flex flex-wrap items-center justify-end gap-3">
               <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
                 {filtered.length} / {visibleIssues.length} tickets
@@ -387,7 +401,7 @@ export default function Dashboard({
         </div>
       </nav>
 
-      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6">
+      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 lg:pl-60">
         {/* ============ BARRE LATÉRALE (navigation par rôle) ============ */}
         <Sidebar items={navItems} active={activeSection} onSelect={handleNavSelect} />
 

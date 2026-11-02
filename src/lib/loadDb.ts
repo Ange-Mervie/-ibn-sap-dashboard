@@ -2,10 +2,12 @@
 // Utilisé par la page d'accueil ; l'Excel reste pour l'import (scripts/db:import).
 import fs from "fs";
 import path from "path";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { tickets } from "@/db/schema";
 import { isOpen, todayISO, STATUSES, type Issue, type IssueData } from "./issues";
 import { readExcelIssues } from "./loadIssues";
+import { type WorkspaceRole } from "./access";
 
 // Date MySQL "YYYY-MM-DD" ou Timestamp → "YYYY-MM-DD" ("" si absent)
 function iso(d: Date | string | null): string {
@@ -15,8 +17,13 @@ function iso(d: Date | string | null): string {
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`;
 }
 
-export async function loadIssueDataFromDb(): Promise<IssueData> {
-  const rows = await db.select().from(tickets).orderBy(tickets.id);
+export type WorkspaceSession = { role: WorkspaceRole; email: string };
+
+export async function loadIssueDataFromDb(session?: WorkspaceSession): Promise<IssueData> {
+  const where = session?.role === "agent"
+    ? and(eq(sql`lower(trim(${tickets.assignee}))`, session.email.trim().toLowerCase()))
+    : undefined;
+  const rows = await db.select().from(tickets).where(where).orderBy(tickets.id);
 
   const issues: Issue[] = rows.map((t) => ({
     id: t.id,
@@ -133,6 +140,7 @@ export async function loadIssueDataFromDb(): Promise<IssueData> {
   const lastRow = await db
     .select({ m: tickets.updatedAt })
     .from(tickets)
+    .where(where)
     .orderBy(tickets.updatedAt)
     .limit(1);
   const lastUpdate = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" }).format(

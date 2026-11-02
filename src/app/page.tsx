@@ -3,7 +3,6 @@ import { loadIssueDataFromDb } from "@/lib/loadDb";
 import { lastSync } from "@/lib/gmail/sync";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Banner from "@/components/Banner";
 import Dashboard from "@/components/Dashboard";
 
 // Route bloquante : rendue à chaque requête (l'ancienneté des tickets
@@ -17,14 +16,12 @@ export default async function HomePage() {
   // Arrête le prerender statique ici — le reste est calculé à la requête
   await connection();
 
-  const data = await loadIssueDataFromDb();
+  const data = await loadIssueDataFromDb({ role: session.role, email: session.email });
   const last = await lastSync();
   const syncNote = last ? { outcome: last.outcome, detail: last.detail } : null;
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      {/* Bande d'images défilante (inchangée) */}
-      <Banner />
       {/* Application : en-tête, filtres, sidebar, 3 sections */}
       <Dashboard
         data={data}

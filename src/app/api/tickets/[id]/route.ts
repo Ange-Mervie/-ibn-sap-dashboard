@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { tickets, ticketEvents, ticketComments, type Ticket } from "@/db/schema";
 import { jsonError } from "@/lib/db";
 import { getSession, canWrite, canManage, canAdmin } from "@/lib/auth";
+import { canReadTicket } from "@/lib/access";
 import { validateTicketPatch } from "@/lib/validate";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -25,6 +26,9 @@ export async function GET(_req: Request, { params }: Ctx) {
 
   if (!ticket) {
     return jsonError(404, `Ticket introuvable : ${id}`);
+  }
+  if (!canReadTicket(session.role, ticket.assignee, session.email)) {
+    return jsonError(403, "Accès refusé. Ce ticket n'est pas assigné à cet agent.");
   }
 
   const events = await db

@@ -384,7 +384,19 @@ if (barBox && barBox.w > 1) {
   check("PBI Période visible (chip + dates synchronisées)", chipPeriod);
 
   // récliquer sur la même barre désactive la période
-  await page.mouse.click(barBox.x, barBox.y);
+  const barBox2 = await page.evaluate(() => {
+    const wrap = document.querySelector('[data-chart="timeline"]');
+    if (!wrap) return null;
+    const series = wrap.querySelectorAll("g.recharts-bar-rectangles");
+    if (!series.length) return null;
+    const rects = [...series[0].querySelectorAll("g.recharts-bar-rectangle")];
+    if (!rects.length) return null;
+    const r = rects[0].getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width, months: rects.length };
+  });
+  if (barBox2 && barBox2.w > 1) {
+    await page.mouse.click(barBox2.x, barBox2.y);
+  }
   await sleep(500);
   const k17b = await kpiValues();
   check("PBI Récliquer (désactivation) → Total = 98", k17b[0] === "98", JSON.stringify(k17b));

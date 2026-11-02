@@ -1,9 +1,10 @@
 // API comptes rendus d'intervention — /api/tickets/[id]/reports
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { tickets, interventionReports, ticketEvents, REPORT_STATUSES } from "@/db/schema";
-import { getSession, canWrite } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { canCreateReports, sameIdentity } from "@/lib/access";
 import { jsonError } from "@/lib/db";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -18,31 +19,28 @@ export async function GET(_req: Request, { params }: Ctx) {
   if (session.role === "viewer") return jsonError(403, "Accès refusé. Rôle consultation uniquement.");
 
   const { id } = await params;
-  const ticket = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
-  if (!ticket[0]) return jsonError(404, "Ticket introuvable.");
+  const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
+  if (!ticket) return jsonError(404, "Ticket introuvable.");
+  if (session.role === "agent" && !sameIdentity(ticket.assignee, session.email)) return jsonError(403, "Accès refusé.");
 
+  const predicates = [eq(interventionReports.ticketId, id)];
+  if (session.role === "agent") predicates.push(eq(interventionReports.agentId, session.email));
+  if (session.role === "viewer") predicates.push(eq(interventionReports.status, "validated"));
   const reports = await db
     .select()
     .from(interventionReports)
-    .where(eq(interventionReports.ticketId, id))
+    .where(and(...predicates))
     .orderBy(desc(interventionReports.createdAt));
-
-  let scoped = reports;
-  if (session.role === "agent") {
-    scoped = reports.filter((r) => r.agentId.toLowerCase() === session.email.toLowerCase());
-  }
-
-  return Response.json({ reports: scoped });
+  return Response.json({ reports });
 }
 
 export async function POST(req: Request, { params }: Ctx) {
   const session = await getSession();
   if (!session) return jsonError(401, "Non authentifié.");
-  if (!canWrite(session.role)) return jsonError(403, "Accès refusé. Rôle non autorisé.");
-
   const { id } = await params;
   const ticket = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
   if (!ticket[0]) return jsonError(404, "Ticket introuvable.");
+  if (!canCreateReports(session.role, ticket[0].assignee, session.email)) return jsonError(403, "Accès refusé. Votre rôle ou l'affectation ne permet pas de soumettre un rapport.");
 
   let body: unknown;
   try {
