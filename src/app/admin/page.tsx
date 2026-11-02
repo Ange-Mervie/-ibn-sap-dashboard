@@ -10,7 +10,7 @@ import UserManagementTable from "@/components/UserManagementTable";
 import SessionControls from "@/components/SessionControls";
 
 export const metadata = {
-  title: "Administration — IBN SAP Dashboard",
+  title: "Administration — Suivi des incidents SAP",
   description: "Gestion des utilisateurs et des accès",
 };
 

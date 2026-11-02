@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Hourglass, Layers, Users } from "lucide-react";
 import type { Issue } from "@/lib/issues";
 import { isOpen, ageDays } from "@/lib/issues";
@@ -8,8 +8,17 @@ import { Panel } from "./Charts";
 import KpiCard from "./KpiCard";
 import SectionHeader from "./SectionHeader";
 import type { HomeProps } from "./homeProps";
+import type { WorkPayment } from "@/db/schema";
 
 const OVERDUE_AFTER_DAYS = 30;
+
+const PAYMENT_LABEL: Record<string, string> = {
+  to_pay: "En attente",
+  pending: "À vérifier",
+  partial: "Partiel",
+  paid: "Payé",
+  not_billable: "Non facturable",
+};
 
 export default function ManagerHome(props: HomeProps) {
   const { issues, user } = props;
@@ -37,12 +46,32 @@ export default function ManagerHome(props: HomeProps) {
 
   const topWorkload = workload[0]?.count ?? 0;
 
+  const [payTicketId, setPayTicketId] = useState("");
+  const [payments, setPayments] = useState<WorkPayment[]>([]);
+
+  useEffect(() => {
+    if (!payTicketId) {
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/payments?ticketId=${encodeURIComponent(payTicketId)}`)
+      .then((r) => (r.ok ? r.json() : { payments: [] }))
+      .then((d) => {
+        if (!cancelled) setPayments((d as { payments?: WorkPayment[] })?.payments ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setPayments([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [payTicketId]);
+
   return (
     <>
       <SectionHeader
         title="Supervision — Manager"
         subtitle={`Vue de supervision de l'équipe ${user.name} : charge, urgences, affectations et retards.`}
-        image="/banner/office.jpg"
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <KpiCard label="Tickets à affecter" value={toAssign.length} sub="Ouverts sans assignation" icon={Layers} color="text-orange-600" />
@@ -81,6 +110,67 @@ export default function ManagerHome(props: HomeProps) {
 
       <Panel title="Performance de l'équipe">
         <AgentPerformance issues={open} />
+      </Panel>
+
+      <Panel title="Paiements des interventions">
+        <div className="mb-4 max-w-md">
+          <select
+            aria-label="Sélectionner un ticket pour le paiement"
+            value={payTicketId}
+            onChange={(e) => setPayTicketId(e.target.value)}
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none"
+          >
+            <option value="">Sélectionner un ticket…</option>
+            {open.filter((i) => i.assignee).map((i) => (
+              <option key={i.id} value={i.id}>
+                #{i.id} — {i.description}
+              </option>
+            ))}
+          </select>
+        </div>
+        {payTicketId ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Ticket</th>
+                    <th className="px-3 py-2 font-medium">Agent</th>
+                    <th className="px-3 py-2 font-medium">Travail effectué</th>
+                    <th className="px-3 py-2 font-medium">Montant dû</th>
+                    <th className="px-3 py-2 font-medium">Montant payé</th>
+                    <th className="px-3 py-2 font-medium">Solde</th>
+                    <th className="px-3 py-2 font-medium">Date paiement</th>
+                    <th className="px-3 py-2 font-medium">Référence</th>
+                    <th className="px-3 py-2 font-medium">Statut</th>
+                    <th className="px-3 py-2 font-medium">Preuve</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {payments.map((p) => (
+                    <tr key={p.id} className="hover:bg-zinc-50">
+                      <td className="px-3 py-2 font-semibold text-zinc-900">#{p.ticketId}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.agentId}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.nature || "—"}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.amountPlanned}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.amountPaid}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.amountPlanned - p.amountPaid}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.paymentDate ? new Date(String(p.paymentDate)).toLocaleDateString("fr-FR") : "—"}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.transactionRef || "—"}</td>
+                      <td className="px-3 py-2 text-zinc-600">{PAYMENT_LABEL[p.paymentStatus] ?? p.paymentStatus}</td>
+                      <td className="px-3 py-2 text-zinc-600">{p.proof || "—"}</td>
+                    </tr>
+                  ))}
+                  {payments.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="px-3 py-6 text-center text-sm text-zinc-400">Aucun paiement enregistré pour ce ticket.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+        ) : (
+          <p className="py-6 text-center text-sm text-zinc-400">Sélectionnez un ticket pour consulter les paiements liés aux interventions.</p>
+        )}
       </Panel>
     </>
   );

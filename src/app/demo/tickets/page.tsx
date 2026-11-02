@@ -33,11 +33,6 @@ export default async function DemoTicketsPage() {
       {syncNote && (
         <div className="mt-5 rounded-lg border border-zinc-200 bg-white p-4 text-sm text-zinc-700 shadow-sm">
           <span className="font-medium">Gmail :</span> Dernière synchronisation : {syncNote.outcome} — {syncNote.detail}
-          <div className="mt-2">
-            <Link href="/emails" className="text-blue-700 underline">
-              Voir les candidats
-            </Link>
-          </div>
         </div>
       )}
     </main>

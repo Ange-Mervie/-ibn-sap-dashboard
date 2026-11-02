@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users, Bell } from "lucide-react";
+import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users, Bell, Menu } from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
 import { STATUSES, PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY, isOpen } from "@/lib/issues";
 import IssueTable from "./IssueTable";
@@ -26,26 +26,26 @@ const SECTIONS = [
 // Navigation dédiée par rôle (refonte visuelle : 4 espaces distincts)
 const NAV: Record<string, SidebarItem[]> = {
   admin: [
-    { id: "overview", label: "Vue générale", icon: LayoutDashboard },
-    { id: "tracking", label: "Tous les tickets", icon: Table2 },
-    { id: "analysis", label: "Rapports & analyses", icon: BarChart3 },
-    { id: "admin", label: "Collaborateurs", href: "/admin", icon: Users },
-    { id: "emails", label: "Comptes rendus & notifications", href: "/emails", icon: Bell },
+    { id: "overview", label: "Vue générale", icon: LayoutDashboard, group: "Général" },
+    { id: "tracking", label: "Tous les tickets", icon: Table2, group: "Général" },
+    { id: "analysis", label: "Rapports & analyses", icon: BarChart3, group: "Général" },
+    { id: "admin", label: "Collaborateurs", href: "/admin", icon: Users, group: "Gestion" },
+    { id: "emails", label: "Comptes rendus & notifications", href: "/emails", icon: Bell, group: "Gestion" },
   ],
   manager: [
-    { id: "overview", label: "Supervision", icon: LayoutDashboard },
-    { id: "tracking", label: "Suivi des tickets", icon: Table2 },
-    { id: "analysis", label: "Rapports", icon: BarChart3 },
+    { id: "overview", label: "Supervision", icon: LayoutDashboard, group: "Supervision" },
+    { id: "tracking", label: "Suivi des tickets", icon: Table2, group: "Supervision" },
+    { id: "analysis", label: "Rapports", icon: BarChart3, group: "Supervision" },
   ],
   agent: [
-    { id: "overview", label: "Mon tableau de bord", icon: LayoutDashboard },
-    { id: "tracking", label: "Mes tickets", icon: Table2 },
-    { id: "analysis", label: "Mes interventions", icon: BarChart3 },
+    { id: "overview", label: "Mon tableau de bord", icon: LayoutDashboard, group: "Mon espace" },
+    { id: "tracking", label: "Mes tickets", icon: Table2, group: "Mon espace" },
+    { id: "analysis", label: "Mes interventions", icon: BarChart3, group: "Mon espace" },
   ],
   viewer: [
-    { id: "overview", label: "Vue globale", icon: LayoutDashboard },
-    { id: "tracking", label: "Incidents", icon: Table2 },
-    { id: "analysis", label: "Rapports", icon: BarChart3 },
+    { id: "overview", label: "Vue globale", icon: LayoutDashboard, group: "Consultation" },
+    { id: "tracking", label: "Incidents", icon: Table2, group: "Consultation" },
+    { id: "analysis", label: "Rapports", icon: BarChart3, group: "Consultation" },
   ],
 };
 
@@ -59,7 +59,7 @@ export default function Dashboard({
   user: { name: string; email: string; role: string };
 }) {
   const canCreateTickets = user.role === "admin" || user.role === "agent";
-  const canAccessGmail = user.role === "admin" || user.role === "manager";
+  const canAccessGmail = user.role === "admin";
   // ==========================================================
   // ÉTAT GLOBAL UNIQUE DES FILTRES (source de vérité)
   // Tout en dérive : KPI, graphiques, tableau, compteur, chips.
@@ -69,6 +69,7 @@ export default function Dashboard({
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [activeSection, setActiveSection] = useState("overview");
   const [notifOpen, setNotifOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
 
   // Listes des filtres déroulants (à partir des données)
   const visibleIssues = data.issues;
@@ -161,6 +162,12 @@ export default function Dashboard({
     setActiveSection(id);
   }
 
+  function handleLogout() {
+    fetch("/api/auth/logout", { method: "POST" }).then(() => {
+      window.location.href = "/login";
+    });
+  }
+
   const selectClass =
     "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none";
   const inputClass =
@@ -174,10 +181,10 @@ export default function Dashboard({
           <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-2 px-4 py-2 text-xs text-zinc-600">
             <span className="font-medium text-zinc-700">Gmail :</span>
             <span data-sync-banner>
-              Dernière synchronisation : {syncNote.outcome} — {syncNote.detail}
+              {syncNote.outcome === "not_configured" ? "Dernière synchronisation : Gmail non configuré." : `Dernière synchronisation : ${syncNote.outcome} — ${syncNote.detail}`}
             </span>
-              <Link href="/emails" className="text-blue-700 underline">
-              Voir les candidats
+            <Link href="/emails" className="font-medium text-blue-700 underline">
+              Gmail
             </Link>
           </div>
         </div>
@@ -185,10 +192,10 @@ export default function Dashboard({
 
       {/* ============ EN-TÊTE : titre, période, mise à jour ============ */}
       <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-4">
+        <div className="mx-auto max-w-[1500px] px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-lg font-bold text-zinc-900">
+              <h1 className="text-base font-bold text-zinc-900">
                 IBN GROUP SARL — Suivi des incidents SAP
               </h1>
               <p className="mt-0.5 text-xs text-zinc-500">
@@ -265,6 +272,14 @@ export default function Dashboard({
                 )}
               </div>
               {user.role === "admin" && <Link href="/admin" className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"><Users size={15} /> Utilisateurs</Link>}
+              <button
+                type="button"
+                onClick={() => setNavOpen(true)}
+                aria-label="Ouvrir le menu de navigation"
+                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-700 hover:bg-zinc-50 lg:hidden"
+              >
+                <Menu size={16} />
+              </button>
               <SessionControls user={user} />
             </div>
           </div>
@@ -384,26 +399,17 @@ export default function Dashboard({
       )}
 
 
-      {/* Navigation mobile (barre horizontale) */}
-      <nav className="border-b border-zinc-200 bg-white lg:hidden">
-        <div className="mx-auto flex max-w-[1500px] gap-1 overflow-x-auto px-4 py-2">
-          {SECTIONS.map((s) => (
-            <a
-              key={s.id}
-              href={`#${s.id}`}
-              className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm ${
-                activeSection === s.id ? "bg-blue-50 font-medium text-blue-700" : "text-zinc-600"
-              }`}
-            >
-              {s.label}
-            </a>
-          ))}
-        </div>
-      </nav>
-
-      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 lg:pl-60">
+      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 lg:pl-64">
         {/* ============ BARRE LATÉRALE (navigation par rôle) ============ */}
-        <Sidebar items={navItems} active={activeSection} onSelect={handleNavSelect} />
+        <Sidebar
+          items={navItems}
+          active={activeSection}
+          onSelect={handleNavSelect}
+          user={user}
+          onLogout={handleLogout}
+          open={navOpen}
+          onOpenChange={setNavOpen}
+        />
 
         {/* ============ CONTENU ============ */}
         <main className="min-w-0 flex-1 space-y-16">
@@ -440,10 +446,9 @@ export default function Dashboard({
       </div>
 
       {/* Pied de page */}
-      <footer className="border-t border-zinc-200 bg-white py-5">
+      <footer className="border-t border-zinc-200 bg-white py-3">
         <p className="text-center text-xs text-zinc-400">
-          IBN SAP Dashboard , Source : {data.source} · {visibleIssues.length} tickets ·
-          Consultation, création et modification des tickets (la source Excel n&apos;est pas modifiée)
+          IBN GROUP SARL · Application de suivi des incidents SAP · © 2026
         </p>
       </footer>
     </div>

@@ -45,7 +45,6 @@ export default function ViewerHome(props: HomeProps) {
       <SectionHeader
         title="Consultation — Vue globale des incidents"
         subtitle={`Consultation des incidents autorisés pour le rôle ${user.role}. Aucune action de modification.`}
-        image="/banner/office.jpg"
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <KpiCard label="Incidents consultés" value={issues.length} sub="Tickets visibles dans le périmètre" icon={Layers} color="text-blue-600" />

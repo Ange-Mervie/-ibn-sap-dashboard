@@ -25,7 +25,6 @@ export async function GET(_req: Request, { params }: Ctx) {
 
   const predicates = [eq(interventionReports.ticketId, id)];
   if (session.role === "agent") predicates.push(eq(interventionReports.agentId, session.email));
-  if (session.role === "viewer") predicates.push(eq(interventionReports.status, "validated"));
   const reports = await db
     .select()
     .from(interventionReports)

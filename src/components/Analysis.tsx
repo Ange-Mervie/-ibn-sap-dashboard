@@ -316,7 +316,7 @@ export default function Analysis({
       </div>
 
       {/* ============ CONTRÔLES DES DONNÉES ============ */}
-      <Panel title={`Contrôles qualité des données — source : ${source}`}>
+      <Panel title="Contrôles qualité des données">
         <ul className="space-y-2">
           {controls.map((c) => (
             <li key={c.label} className="flex items-start gap-2 text-sm">

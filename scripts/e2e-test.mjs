@@ -662,7 +662,7 @@ const syncBanner = await page.evaluate(() => ({
 check("Bandeau « Dernière synchronisation » visible sur le dashboard", syncBanner.present, JSON.stringify(syncBanner.present));
 check("Bandeau contient le statut de la dernière sync", syncBanner.text.includes("Dernière synchronisation"), JSON.stringify(syncBanner.text.slice(0, 200)));
 const bannerLink = await page.evaluate(() =>
-  [...document.querySelectorAll("a")].some((a) => a.getAttribute("href") === "/emails" && a.textContent.includes("Voir les candidats"))
+  [...document.querySelectorAll("a")].some((a) => a.getAttribute("href") === "/emails" && a.textContent.includes("Gmail"))
 );
 check("Bandeau → lien /emails présent", bannerLink);
 

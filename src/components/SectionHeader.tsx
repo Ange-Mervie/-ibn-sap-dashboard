@@ -7,18 +7,20 @@
 type SectionHeaderProps = {
   title: string;
   subtitle: string;
-  image: string;
+  image?: string;
 };
 
 export default function SectionHeader({ title, subtitle, image }: SectionHeaderProps) {
   return (
-    <div className="relative mb-8 overflow-hidden rounded-xl">
+    <div className="relative mb-8 overflow-hidden rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700">
       {/* Image de fond */}
-      <img
-        src={image}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      {image ? (
+        <img
+          src={image}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : null}
       {/* Voile sombre pour que le texte reste lisible */}
       <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/85 via-zinc-900/60 to-zinc-900/30" />
 

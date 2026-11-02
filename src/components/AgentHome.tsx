@@ -26,7 +26,6 @@ export default function AgentHome(props: HomeProps) {
       <SectionHeader
         title={`Bonjour, ${firstName}`}
         subtitle="Votre espace de travail : vos tickets assignés, vos urgences et vos interventions."
-        image="/banner/office.jpg"
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <KpiCard label="Mes tickets assignés" value={issues.length} sub="Tickets ouverts sur mon périmètre" icon={Clock} color="text-blue-600" />
