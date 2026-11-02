@@ -22,5 +22,5 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const ticketId = searchParams.get("ticketId");
   const rows = ticketId ? await db.select().from(attachments) : await db.select().from(attachments);
-  return NextResponse.json(rows.filter((a: any) => !ticketId || a.ticketId === ticketId));
+  return NextResponse.json(rows.filter((a: { ticketId: string }) => !ticketId || a.ticketId === ticketId));
 }

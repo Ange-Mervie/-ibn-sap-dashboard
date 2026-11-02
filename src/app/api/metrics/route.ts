@@ -9,7 +9,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const rows = await db.select().from(tickets);
   const byWeek: Record<string, number> = {};
-  for (const t of rows as any[]) {
+  for (const t of rows as { status: string; updatedAt: Date | null }[]) {
     if (t.status === "Closed" && t.updatedAt) {
       const d = new Date(t.updatedAt);
       const key = `${d.getFullYear()}-W${Math.ceil((d.getDate() + 6 - d.getDay()) / 7)}`;

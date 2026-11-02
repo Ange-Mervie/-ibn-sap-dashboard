@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
-  await db.insert(deadlineRequests).values({ ticketId: parsed.data.ticketId, requestedBy: session.sub, newDueDate: parsed.data.newDueDate as any, reason: parsed.data.reason ?? "" });
+  await db.insert(deadlineRequests).values({ ticketId: parsed.data.ticketId, requestedBy: session.sub, newDueDate: new Date(parsed.data.newDueDate), reason: parsed.data.reason ?? "" });
   return NextResponse.json({ ok: true });
 }
 

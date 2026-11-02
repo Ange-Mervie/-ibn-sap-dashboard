@@ -8,7 +8,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const rows = await db.select().from(tickets);
   const counts: Record<string, number> = {};
-  for (const t of rows as any[]) {
+  for (const t of rows as { status: string; assignee: string }[]) {
     if (t.status !== "Closed") counts[t.assignee] = (counts[t.assignee] ?? 0) + 1;
   }
   return NextResponse.json(counts);

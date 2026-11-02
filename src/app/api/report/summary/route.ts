@@ -8,6 +8,6 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const rows = await db.select().from(tickets);
   const total = rows.length;
-  const closed = (rows as any[]).filter((t) => t.status === "Closed").length;
+  const closed = rows.filter((t: { status: string }) => t.status === "Closed").length;
   return NextResponse.json({ total, closed, open: total - closed, generatedAt: new Date().toISOString() });
 }
