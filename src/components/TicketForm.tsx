@@ -6,8 +6,6 @@ import Link from "next/link";
 import { ArrowLeft, Send, AlertTriangle } from "lucide-react";
 import { STATUSES, PRIORITIES, MODULES } from "@/lib/issues";
 
-const PAYMENTS = ["PAID", "INVOICED", "NOT INVOICED"];
-
 const field =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none";
 const label = "mb-1 block text-sm font-medium text-zinc-700";
@@ -26,7 +24,6 @@ export default function TicketForm() {
     assignee: "",
     openDate: "",
     closeDate: "",
-    payment: "",
   });
 
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -108,15 +105,6 @@ export default function TicketForm() {
             <option value="">— Non renseigné —</option>
             {MODULES.map((m) => (
               <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={label} htmlFor="payment">Statut de paiement</label>
-          <select id="payment" className={field} value={form.payment} onChange={(e) => set("payment")(e.target.value)}>
-            <option value="">— Non renseigné —</option>
-            {PAYMENTS.map((p) => (
-              <option key={p} value={p}>{p}</option>
             ))}
           </select>
         </div>

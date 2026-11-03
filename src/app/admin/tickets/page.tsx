@@ -1,25 +1,29 @@
-import { Suspense } from "react";
+import { loadIssueDataFromDb } from "@/lib/loadDb";
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import IssueTable from "@/components/IssueTable";
 
-async function TicketsList() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/tickets`, { cache: "no-store" });
-  const tickets = await res.json();
+export const instant = false;
+
+export default async function AdminTicketsPage() {
+  const session = await getSession();
+  if (!session) redirect("/login?from=%2Fadmin%2Ftickets");
+
+  const data = await loadIssueDataFromDb({ role: session.role, email: session.email });
+  const issues = data.issues;
+  const isManager = session.role === "manager";
+
   return (
-    <div className="p-6">
-      <h1 className="mb-4 text-xl font-bold">Tous les tickets</h1>
-      <table className="w-full border text-sm">
-        <thead><tr><th>Réf</th><th>Objet</th><th>Statut</th><th>Priorité</th><th>Agent</th></tr></thead>
-        <tbody>
-          {tickets.map((t: { id: string; title?: string; subject?: string; status: string; priority: string; assignee: string }) => (
-            <tr key={t.id} className="border-t">
-              <td>{t.id}</td><td>{t.title ?? t.subject}</td><td>{t.status}</td><td>{t.priority}</td><td>{t.assignee}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="min-h-screen bg-zinc-50">
+      <div className="mx-auto max-w-[1500px] px-4 py-6">
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-zinc-900">{isManager ? "Suivi des tickets" : "Tous les tickets"}</h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Liste complète des tickets en base (MySQL) — {issues.length} ticket(s) visibles pour ce profil.
+          </p>
+        </div>
+        <IssueTable issues={issues} onReset={() => {}} filtersActive={false} />
+      </div>
     </div>
   );
-}
-
-export default function Page() {
-  return <Suspense fallback={<p>Chargement…</p>}><TicketsList /></Suspense>;
 }

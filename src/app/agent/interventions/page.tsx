@@ -18,7 +18,7 @@ export default async function Page() {
           ))}
         </tbody>
       </table>
-      <p className="mt-4 text-xs text-slate-500">Enregistrement d'intervention à compléter via le formulaire dédié.</p>
+      <p className="mt-4 text-xs text-slate-500">Enregistrement d&apos;intervention à compléter via le formulaire dédié.</p>
     </div>
   );
 }

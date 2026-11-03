@@ -24,30 +24,36 @@ const SECTIONS = [
 ];
 
 // Navigation dédiée par rôle (refonte visuelle : 4 espaces distincts)
+// Chaque rubrique pointe vers une vraie route (href) — plus de bouton décoratif.
 const NAV: Record<string, SidebarItem[]> = {
   admin: [
-    { id: "overview", label: "Vue générale", icon: LayoutDashboard, group: "Général" },
-    { id: "tracking", label: "Tous les tickets", icon: Table2, group: "Général" },
-    { id: "analysis", label: "Rapports & analyses", icon: BarChart3, group: "Général" },
+    { id: "overview", label: "Vue générale", href: "/", icon: LayoutDashboard, group: "Général" },
+    { id: "tracking", label: "Tous les tickets", href: "/admin/tickets", icon: Table2, group: "Général" },
+    { id: "analysis", label: "Rapports & analyses", href: "/admin/reports", icon: BarChart3, group: "Général" },
     { id: "admin", label: "Collaborateurs", href: "/admin", icon: Users, group: "Gestion" },
     { id: "emails", label: "Comptes rendus & notifications", href: "/emails", icon: Bell, group: "Gestion" },
   ],
   manager: [
-    { id: "overview", label: "Supervision", icon: LayoutDashboard, group: "Supervision" },
-    { id: "tracking", label: "Suivi des tickets", icon: Table2, group: "Supervision" },
-    { id: "analysis", label: "Rapports", icon: BarChart3, group: "Supervision" },
+    { id: "overview", label: "Supervision", href: "/", icon: LayoutDashboard, group: "Supervision" },
+    { id: "tracking", label: "Suivi des tickets", href: "/manager/tickets", icon: Table2, group: "Supervision" },
+    { id: "analysis", label: "Comptes rendus", href: "/manager/interventions", icon: BarChart3, group: "Supervision" },
+    { id: "agents", label: "Suivi des agents", href: "/manager/agents", icon: Users, group: "Supervision" },
+    { id: "assignation", label: "Affectation des tickets", href: "/manager/assignation", icon: Table2, group: "Supervision" },
+    { id: "paiements", label: "Paiements des agents", href: "/manager/paiements", icon: BarChart3, group: "Supervision" },
+    { id: "retards", label: "Retards et alertes", href: "/manager/retards", icon: AlertTriangle, group: "Supervision" },
   ],
   agent: [
-    { id: "overview", label: "Mon tableau de bord", icon: LayoutDashboard, group: "Mon espace" },
-    { id: "tracking", label: "Mes tickets", icon: Table2, group: "Mon espace" },
-    { id: "analysis", label: "Mes interventions", icon: BarChart3, group: "Mon espace" },
+    { id: "overview", label: "Mon tableau de bord", href: "/", icon: LayoutDashboard, group: "Mon espace" },
+    { id: "tracking", label: "Mes tickets", href: "/agent/mes-tickets", icon: Table2, group: "Mon espace" },
+    { id: "analysis", label: "Mes interventions", href: "/agent/interventions", icon: BarChart3, group: "Mon espace" },
   ],
   viewer: [
-    { id: "overview", label: "Vue globale", icon: LayoutDashboard, group: "Consultation" },
-    { id: "tracking", label: "Incidents", icon: Table2, group: "Consultation" },
-    { id: "analysis", label: "Rapports", icon: BarChart3, group: "Consultation" },
+    { id: "overview", label: "Vue globale", href: "/", icon: LayoutDashboard, group: "Consultation" },
+    { id: "tracking", label: "Incidents", href: "/", icon: Table2, group: "Consultation" },
+    { id: "analysis", label: "Rapports", href: "/", icon: BarChart3, group: "Consultation" },
   ],
 };
+
 
 export default function Dashboard({
   data,

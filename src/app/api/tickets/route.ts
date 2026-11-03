@@ -1,4 +1,5 @@
-// POST /api/tickets — création d'un ticket dans MySQL.
+// GET : liste des tickets (ADMIN / MANAGER : tous · AGENT : les siens)
+// POST : création d'un ticket dans MySQL.
 // Numéro lisible SAP-YYYY-NNNN généré via la table ticket_counters (sans collision).
 import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -8,8 +9,29 @@ import { jsonError } from "@/lib/db";
 import { getSession, canWrite } from "@/lib/auth";
 import { validateTicketInput } from "@/lib/validate";
 
+// GET /api/tickets — liste des tickets accessibles à la session.
+export async function GET(req: Request) {
+  const session = await getSession();
+  if (!session) return jsonError(401, "Non authentifié. Veuillez vous connecter.");
+
+  if (session.role === "admin" || session.role === "manager") {
+    const rows = await db.select().from(tickets).orderBy(tickets.id);
+    return Response.json({ tickets: rows });
+  }
+
+  if (session.role === "agent") {
+    const rows = await db
+      .select()
+      .from(tickets)
+      .where(eq(tickets.assignee, session.email))
+      .orderBy(tickets.id);
+    return Response.json({ tickets: rows });
+  }
+
+  return jsonError(403, "Accès refusé. Rôle non autorisé à consulter les tickets.");
+}
+
 export async function POST(req: Request) {
-  // Double protection : proxy.ts bloque les non-connectés, ici on vérifie le rôle côté serveur
   const session = await getSession();
   if (!session) return jsonError(401, "Non authentifié. Veuillez vous connecter.");
   if (!canWrite(session.role)) return jsonError(403, "Accès refusé. Votre rôle ne permet pas la création de tickets.");
@@ -46,8 +68,8 @@ export async function POST(req: Request) {
           module: data.module,
           raisedBy: data.raisedBy,
           email: data.email,
-            assignee: data.assignee,
-            createdBy: session.email,
+          assignee: data.assignee,
+          createdBy: session.email,
           openDate: data.openDate ? new Date(data.openDate + "T00:00:00") : null,
           closeDate: data.closeDate ? new Date(data.closeDate + "T00:00:00") : null,
           payment: data.payment,

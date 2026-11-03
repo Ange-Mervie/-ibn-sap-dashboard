@@ -23,21 +23,16 @@ const PROTECTED_PAGES = [
   /^\/tickets$/,
   /^\/emails/,
   /^\/admin/,
+  /^\/manager/,
   /^\/demo\//,
 ];
 
-// Nom du cookie de session (doit correspondre à src/lib/auth.ts)
 const SESSION_COOKIE = "ibn_session";
 
 function getTokenFromRequest(request: NextRequest): string | undefined {
   return request.cookies.get(SESSION_COOKIE)?.value;
 }
 
-/**
- * Décode le payload JWT sans vérification cryptographique.
- * La vérification réelle se fait dans src/lib/auth.ts (côté serveur complet).
- * Ici on lit uniquement le rôle/exp pour les redirections rapides du proxy.
- */
 function decodePayloadFast(
   token: string
 ): { sub: number; role: string; exp: number } | null {
@@ -67,7 +62,6 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.json({ error: "Non authentifié. Veuillez vous connecter." }, { status: 401 });
   }
 
-  // --- Protection des pages UI ---
   const isProtectedPage = PROTECTED_PAGES.some((re) => re.test(pathname));
   if (isProtectedPage && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
@@ -75,12 +69,10 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Empêcher un utilisateur déjà connecté d'accéder à /login
   if (pathname === "/login" && isAuthenticated) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // --- Protection des routes API d'écriture ---
   const isWriteApi = WRITE_APIS.some((re) => re.test(pathname));
   if (isWriteApi && (method === "POST" || method === "PATCH" || method === "DELETE")) {
     if (!isAuthenticated) {
@@ -96,7 +88,6 @@ export function proxy(request: NextRequest): NextResponse {
 
 export const config = {
   matcher: [
-    // Exclure les ressources statiques et les images — ne traiter que les routes dynamiques
     "/((?!_next/static|_next/image|favicon.ico|public/|banner/).*)",
   ],
 };
