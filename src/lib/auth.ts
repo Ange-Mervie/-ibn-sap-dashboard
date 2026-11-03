@@ -5,6 +5,7 @@
 // - Clé : SESSION_SECRET dans .env.local (jamais committé)
 // ============================================================
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import bcrypt from "bcryptjs";
 import { promisify } from "util";
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
@@ -38,9 +39,7 @@ export type SessionPayload = {
  * Le mot de passe en clair n'est jamais loggué ni retourné.
  */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-  const hash = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${salt}:${hash.toString("hex")}`;
+  return bcrypt.hash(password, 10);
 }
 
 /**
@@ -48,6 +47,7 @@ export async function hashPassword(password: string): Promise<string> {
  * Utilise timingSafeEqual pour éviter les timing attacks.
  */
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  if (stored.startsWith("$2")) return bcrypt.compare(password, stored);
   const [salt, hashHex] = stored.split(":");
   if (!salt || !hashHex) return false;
   try {

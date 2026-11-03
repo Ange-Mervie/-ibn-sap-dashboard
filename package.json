@@ -15,6 +15,8 @@
     "check:security": "tsx scripts/check-security.ts"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.61.0",
     "mysql2": "^3.24.6",
