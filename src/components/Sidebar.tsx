@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 
 export type SidebarItem = {
@@ -89,7 +90,7 @@ export default function Sidebar({
     <div className={`border-t border-white/10 px-3.5 py-3 ${collapsed ? "px-2" : ""}`}>
       {collapsed ? (
         <div className="flex items-center justify-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-[10px] font-bold text-white">IBN</div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white overflow-hidden"><Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" /></div>
           {onLogout ? (
             <button type="button" onClick={onLogout} aria-label="Se déconnecter" className="rounded-md px-2 py-1.5 text-slate-300 hover:bg-white/10">
               ⏻
@@ -113,7 +114,7 @@ export default function Sidebar({
   const sidebarBody = (
     <>
       <div className={`flex items-center ${collapsed ? "justify-center px-0 pb-4" : "gap-2 px-5 pb-4 pt-5"}`}>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-[10px] font-bold text-white">IBN</div>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white overflow-hidden"><Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" /></div>
         {!collapsed ? (
           <div className="min-w-0">
             <div className="truncate text-sm font-bold text-white">IBN GROUP</div>
@@ -143,7 +144,9 @@ export default function Sidebar({
             <div className="flex h-full flex-col">
               <div className="flex items-center justify-between px-3 pt-6 pb-5">
                 <div className="flex items-center gap-2.5 px-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-[10px] font-bold text-white">IBN</div>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white overflow-hidden">
+          <Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" />
+        </div>
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-white">IBN GROUP</div>
                     <div className="text-[11px] text-slate-400">Suivi des incidents SAP</div>
