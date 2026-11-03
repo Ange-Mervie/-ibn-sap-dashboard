@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, Download, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Issue } from "@/lib/issues";
-import { isOpen, ageDays, resolutionDays, PRIORITIES, issuesToCSV } from "@/lib/issues";
-import { PRIORITY_COLORS } from "./Charts";
+import { isOpen, ageDays, PRIORITIES, issuesToCSV } from "@/lib/issues";
 import SectionHeader from "./SectionHeader";
 
 const PAGE_SIZE = 12;
@@ -18,7 +17,7 @@ export default function IssueTable({
   filtersActive,
 }: {
   issues: Issue[]; // déjà filtrés par les filtres globaux
-  onReset: () => void;
+  onReset?: () => void;
   filtersActive: boolean;
 }) {
   const [search, setSearch] = useState("");
@@ -74,7 +73,7 @@ export default function IssueTable({
     setSearch("");
     setSort({ key: "id", dir: "asc" });
     setPage(1);
-    onReset();
+    onReset?.();
   }
 
   function exportCSV() {
@@ -110,14 +109,14 @@ export default function IssueTable({
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-72 rounded-md border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-600 focus:outline-none"
+            className="w-72 rounded-lg border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
         </div>
 
         <button
           onClick={exportCSV}
           disabled={!sorted.length}
-          className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50 disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-slate-50 disabled:opacity-40"
         >
           <Download size={14} /> Export CSV
         </button>
@@ -136,9 +135,9 @@ export default function IssueTable({
       </div>
 
       {/* Tableau */}
-      <div className="table-scroll overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="table-scroll overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-left text-xs text-zinc-600">
+          <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
             <tr>
               <th onClick={() => toggleSort("id")} className="cursor-pointer px-3 py-3 font-semibold hover:text-zinc-900">
                 N°{arrow("id")}
@@ -149,22 +148,17 @@ export default function IssueTable({
                 Priorité{arrow("priority")}
               </th>
               <th className="px-3 py-3 font-semibold">Module SAP</th>
-              <th className="px-3 py-3 font-semibold">Raised By</th>
+              <th className="px-3 py-3 font-semibold">Demandeur</th>
+              <th className="px-3 py-3 font-semibold">Agent affecté</th>
               <th onClick={() => toggleSort("openDate")} className="cursor-pointer px-3 py-3 font-semibold hover:text-zinc-900">
                 Open Date{arrow("openDate")}
               </th>
-              <th className="px-3 py-3 font-semibold">Close Date</th>
-              <th onClick={() => toggleSort("age")} className="cursor-pointer px-3 py-3 font-semibold hover:text-zinc-900">
-                Âge / Délai{arrow("age")}
-              </th>
-              <th className="px-3 py-3 font-semibold">Paiement</th>
-              <th className="px-3 py-3 font-semibold">Comments</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody className="divide-y divide-slate-100">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-4 py-12 text-center">
+                <td colSpan={8} className="px-4 py-12 text-center">
                   <p className="text-sm font-medium text-zinc-600">Aucun ticket ne correspond aux critères.</p>
                   <button onClick={resetAll} className="mt-3 text-sm text-blue-600 underline">
                     Réinitialiser les filtres
@@ -173,10 +167,8 @@ export default function IssueTable({
               </tr>
             )}
             {rows.map((i) => {
-              const age = ageDays(i);
-              const delay = resolutionDays(i);
               return (
-                <tr key={i.id} className={`hover:bg-zinc-50 ${i.priority === "Critical" && isOpen(i) ? "bg-red-50/40" : ""}`}>
+                <tr key={i.id} className={`hover:bg-slate-50 ${i.priority === "Critical" && isOpen(i) ? "bg-red-50/60" : ""}`}>
                   <td className="px-3 py-2.5 font-mono text-xs">
                     <Link href={`/tickets/${encodeURIComponent(i.id)}`} className="text-blue-600 underline-offset-2 hover:underline">
                       {i.id}
@@ -195,7 +187,13 @@ export default function IssueTable({
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
-                    <span className="font-medium" style={{ color: PRIORITY_COLORS[i.priority] || "#71717a" }}>
+                    <span
+                      className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                      style={{
+                        backgroundColor: i.priority === "Critical" ? "#fee2e2" : i.priority === "High" ? "#ffedd5" : i.priority === "Medium" ? "#fef3c7" : "#f4f4f5",
+                        color: i.priority === "Critical" ? "#991b1b" : i.priority === "High" ? "#9a3412" : i.priority === "Medium" ? "#92400e" : "#52525b",
+                      }}
+                    >
                       {i.priority}
                     </span>
                   </td>
@@ -203,37 +201,8 @@ export default function IssueTable({
                     {i.module && i.module.toUpperCase() !== "BLANK" ? i.module : <span className="text-amber-600">Non renseigné</span>}
                   </td>
                   <td className="px-3 py-2.5 text-zinc-600">{i.raisedBy || "—"}</td>
+                  <td className="px-3 py-2.5 text-zinc-600">{i.assignee || <span className="text-zinc-400">Non affecté</span>}</td>
                   <td className="px-3 py-2.5 text-zinc-600">{i.openDate || <span className="text-amber-600">Information absente</span>}</td>
-                  <td className="px-3 py-2.5 text-zinc-600">
-                    {i.closeDate || (isOpen(i) ? <span className="text-zinc-400">Ticket ouvert</span> : <span className="text-amber-600">Information absente</span>)}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {isOpen(i) ? (
-                      <span className="text-xs font-medium text-blue-700">{age !== null ? `${age} j d'ancienneté` : "Date absente"}</span>
-                    ) : delay !== null ? (
-                      <span className="text-xs text-zinc-600">Résolu en {delay} j</span>
-                    ) : (
-                      <span className="text-xs text-amber-600">Non calculable</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {i.payment ? (
-                      <span
-                        className="rounded px-2 py-0.5 text-xs font-medium"
-                        style={{
-                          backgroundColor: i.payment === "PAID" ? "#dcfce7" : i.payment === "INVOICED" ? "#dbeafe" : "#fef3c7",
-                          color: i.payment === "PAID" ? "#166534" : i.payment === "INVOICED" ? "#1e40af" : "#92400e",
-                        }}
-                      >
-                        {i.payment}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-zinc-400">Non renseigné</span>
-                    )}
-                  </td>
-                  <td className="max-w-[220px] truncate px-3 py-2.5 text-xs text-zinc-500" title={i.comments}>
-                    {i.comments || "—"}
-                  </td>
                 </tr>
               );
             })}

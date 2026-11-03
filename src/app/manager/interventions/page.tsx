@@ -26,6 +26,7 @@ export default function ManagerInterventionsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [reports, setReports] = useState<Report[]>([]);
+  const [ticket, setTicket] = useState<{ id: string; description: string; status: string; priority: string; assignee: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,14 +42,26 @@ export default function ManagerInterventionsPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedId) return;
+    if (!selectedId) {
+      setTicket(null);
+      return;
+    }
     let cancelled = false;
+    async function loadTicket() {
+      const r = await fetch(`/api/tickets/${encodeURIComponent(selectedId)}`, { cache: "no-store" });
+      const d = await r.json();
+      if (cancelled) return;
+      if (r.ok) setTicket(d?.ticket ?? null);
+      else setTicket(null);
+    }
     async function loadReports() {
       const r = await fetch(`/api/tickets/${encodeURIComponent(selectedId)}/reports`, { cache: "no-store" });
       const d = await r.json();
       if (cancelled) return;
-      setReports(d?.reports ?? []);
+      if (r.ok) setReports(d?.reports ?? []);
+      else setReports([]);
     }
+    void loadTicket();
     void loadReports();
     return () => { cancelled = true; };
   }, [selectedId]);
@@ -97,6 +110,17 @@ export default function ManagerInterventionsPage() {
           </select>
         </div>
 
+        {selectedId && ticket ? (
+          <div className="mb-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">{ticket.id}</p>
+            <p className="mt-1 text-sm text-slate-600">{ticket.description}</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+              <span>Statut : {ticket.status}</span>
+              <span>Priorité : {ticket.priority}</span>
+              <span>Agent : {ticket.assignee}</span>
+            </div>
+          </div>
+        ) : null}
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-left text-xs text-zinc-600">

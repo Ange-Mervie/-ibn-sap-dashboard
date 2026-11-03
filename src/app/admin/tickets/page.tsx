@@ -22,7 +22,7 @@ export default async function AdminTicketsPage() {
             Liste complète des tickets en base (MySQL) — {issues.length} ticket(s) visibles pour ce profil.
           </p>
         </div>
-        <IssueTable issues={issues} onReset={() => {}} filtersActive={false} />
+        <IssueTable issues={issues} filtersActive={false} />
       </div>
     </div>
   );

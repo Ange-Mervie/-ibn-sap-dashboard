@@ -48,10 +48,10 @@ export default function AdminHome(props: HomeProps) {
     <>
       {/* KPI — une seule ligne */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Total tickets" value={issues.length} sub={issues.length === total ? "Tous les tickets" : `sur ${total} au total`} icon={Layers} color="text-zinc-900" />
-        <KpiCard label="Clôturés" value={stats.closed.length} sub="Statut Closed" icon={CheckCircle2} color="text-green-600" />
-        <KpiCard label="Ouverts" value={stats.open.length} sub="Tous statuts non clôturés" icon={Clock} color="text-blue-600" />
-        <KpiCard label="Critical + High" value={issues.filter((i) => i.priority === "Critical" || i.priority === "High").length} sub="Priorités critiques et haute criticité" icon={AlertTriangle} color="text-red-600" />
+        <KpiCard label="Total tickets" value={issues.length} sub={issues.length === total ? "Tous les tickets" : `sur ${total} au total`} icon={<Layers size={15} />} color="text-zinc-900" />
+        <KpiCard label="Clôturés" value={stats.closed.length} sub="Statut Closed" icon={<CheckCircle2 size={15} />} color="text-green-600" />
+        <KpiCard label="Ouverts" value={stats.open.length} sub="Tous statuts non clôturés" icon={<Clock size={15} />} color="text-blue-600" />
+        <KpiCard label="Critical + High" value={issues.filter((i) => i.priority === "Critical" || i.priority === "High").length} sub="Priorités critiques et haute criticité" icon={<AlertTriangle size={15} />} color="text-red-600" />
       </div>
 
       {/* Graphiques — grille cohérente */}

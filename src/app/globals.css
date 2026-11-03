@@ -1,8 +1,31 @@
 @import "tailwindcss";
 
-/* Défilement fluide vers les ancres (sidebar / navigation) */
-html {
-  scroll-behavior: smooth;
+/* =========================================================
+   Design tokens — IBN GROUP (refonte visuelle)
+   Bleu marine profond · bleu vif · blanc · gris clair · anthracite
+   ========================================================= */
+:root {
+  --ibn-navy-950: #060f24;
+  --ibn-navy-900: #0a1f44;
+  --ibn-navy-800: #0b2545;
+  --ibn-blue-700: #1d4ed8;
+  --ibn-blue-600: #2563eb;
+  --ibn-blue-500: #3b82f6;
+  --ibn-blue-100: #dbeafe;
+  --ibn-surface: #ffffff;
+  --ibn-bg: #f4f6f9;
+  --ibn-border: #e2e8f0;
+  --ibn-text: #0f172a;
+  --ibn-text-strong: #1e293b;
+  --ibn-text-muted: #64748b;
+  --ibn-text-faint: #94a3b8;
+  --ibn-green: #16a34a;
+  --ibn-orange: #ea7c1c;
+  --ibn-red: #dc2626;
+  --ibn-amber: #f59e0b;
+  --ibn-radius: 12px;
+  --ibn-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --ibn-shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
 }
 
 /* =========================================================
@@ -33,8 +56,8 @@ html {
    Fond discret de la page (texture très légère)
    ========================================================= */
 .page-bg {
-  background-color: #f4f4f5;
-  background-image: radial-gradient(#d4d4d8 1px, transparent 1px);
+  background-color: #f4f6f9;
+  background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -61,4 +84,23 @@ html {
 
 .chart-clickable [data-cat] {
   cursor: pointer;
+}
+
+/* =========================================================
+   Cartes IBN — surfaces blanches, bordures douces, ombres subtiles
+   ========================================================= */
+.ibn-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.ibn-card-header {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 14px 20px;
+}
+
+.ibn-card-body {
+  padding: 20px;
 }

@@ -21,9 +21,9 @@ import type { DimKey } from "@/lib/issues";
 // Couleurs (modifiez ici) — bleu professionnel + neutres
 // ============================================================
 export const STATUS_COLORS: Record<string, string> = {
-  "Not Started": "#94a3b8",
+  "Not Started": "#64748b",
   "In Progress": "#2563eb",
-  "On Hold": "#64748b",
+  "On Hold": "#3b82f6",
   Blocked: "#dc2626",
   "waiting for Customer": "#f59e0b",
   Closed: "#16a34a",
@@ -64,17 +64,17 @@ function dimmed(active: string | undefined, name: string): number {
   return active && active !== name ? 0.3 : 1;
 }
 
-// ---------- panneau (carte blanche) ----------
+// ---------- panneau (carte IBN) ----------
 export function Panel({ title, children, className = "" }: { title?: string; children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-lg border border-zinc-200 bg-white shadow-sm ${className}`}>
+    <section className={`ibn-card flex min-w-0 flex-col ${className}`}>
       {title && (
-        <h3 className="border-b border-zinc-100 px-5 py-3 text-sm font-semibold text-zinc-700">
-          {title}
-        </h3>
+        <header className="ibn-card-header">
+          <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+        </header>
       )}
-      <div className="p-5">{children}</div>
-    </div>
+      <div className="ibn-card-body">{children}</div>
+    </section>
   );
 }
 

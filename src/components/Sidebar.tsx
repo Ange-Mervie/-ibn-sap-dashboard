@@ -101,6 +101,7 @@ export default function Sidebar({
         <>
           <div className="text-sm font-semibold text-white">{user.name}</div>
           <div className="truncate text-xs text-slate-400">{user.email}</div>
+          <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-300">{user.role}</div>
           {onLogout ? (
             <button type="button" onClick={onLogout} className="mt-2 w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10">
               Se déconnecter

@@ -1,6 +1,5 @@
 // ============================================================
-// En-tête de section avec image de fond
-// Chaque section (Vue d'ensemble, Suivi, Analyse) a la sienne
+// En-tête de section IBN — bannière navy avec identité visuelle
 // Modifier `image` pour changer l'image de fond
 // ============================================================
 
@@ -12,22 +11,15 @@ type SectionHeaderProps = {
 
 export default function SectionHeader({ title, subtitle, image }: SectionHeaderProps) {
   return (
-    <div className="relative mb-8 overflow-hidden rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700">
-      {/* Image de fond */}
+    <div className="relative mb-8 overflow-hidden rounded-2xl bg-[#0a1f44] shadow-sm">
       {image ? (
-        <img
-          src={image}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />
       ) : null}
-      {/* Voile sombre pour que le texte reste lisible */}
-      <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/85 via-zinc-900/60 to-zinc-900/30" />
-
-      {/* Texte */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#060f24]/95 via-[#0a1f44]/80 to-[#0b2545]/70" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />
       <div className="relative px-6 py-8 sm:px-10 sm:py-12">
         <h2 className="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
-        <p className="mt-2 max-w-xl text-sm text-zinc-300">{subtitle}</p>
+        <p className="mt-2 max-w-xl text-sm text-slate-300">{subtitle}</p>
       </div>
     </div>
   );

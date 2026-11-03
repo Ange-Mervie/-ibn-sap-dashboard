@@ -29,10 +29,10 @@ export default async function AdminReportsPage() {
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <KpiCard label="Tickets consultés" value={issues.length} sub="Tickets visibles dans le périmètre" icon={Layers} color="text-blue-600" />
-          <KpiCard label="Ouverts" value={open.length} sub="Statuts non clôturés" icon={Clock} color="text-orange-600" />
-          <KpiCard label="Critiques / à haut risque" value={critical.length} sub="Critical / High" icon={AlertTriangle} color="text-red-600" />
-          <KpiCard label="Clôturés" value={closed.length} sub="Statuts Closed" icon={CheckCircle2} color="text-green-600" />
+          <KpiCard label="Tickets consultés" value={issues.length} sub="Tickets visibles dans le périmètre" icon={<Layers size={15} />} color="text-blue-600" />
+          <KpiCard label="Ouverts" value={open.length} sub="Statuts non clôturés" icon={<Clock size={15} />} color="text-orange-600" />
+          <KpiCard label="Critiques / à haut risque" value={critical.length} sub="Critical / High" icon={<AlertTriangle size={15} />} color="text-red-600" />
+          <KpiCard label="Clôturés" value={closed.length} sub="Statuts Closed" icon={<CheckCircle2 size={15} />} color="text-green-600" />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

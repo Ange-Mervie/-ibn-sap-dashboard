@@ -21,7 +21,7 @@ export default async function ManagerTicketsPage() {
             Tous les tickets accessibles au manager — {issues.length} ticket(s).
           </p>
         </div>
-        <IssueTable issues={issues} onReset={() => {}} filtersActive={false} />
+        <IssueTable issues={issues} filtersActive={false} />
       </div>
     </div>
   );

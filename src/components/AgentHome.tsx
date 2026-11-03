@@ -28,11 +28,11 @@ export default function AgentHome(props: HomeProps) {
         subtitle="Votre espace de travail : vos tickets assignés, vos urgences et vos interventions."
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <KpiCard label="Mes tickets assignés" value={issues.length} sub="Tickets ouverts sur mon périmètre" icon={Clock} color="text-blue-600" />
-        <KpiCard label="Urgents" value={urgent.length} sub="Critical / High en cours" icon={AlertTriangle} color="text-red-600" />
-        <KpiCard label="En cours" value={inProgress.length} sub="Statut In Progress" icon={Clock} color="text-orange-600" />
-        <KpiCard label="Terminés" value={closed.length} sub="Statut Closed" icon={CheckCircle2} color="text-green-600" />
-        <KpiCard label="En retard" value={overdue.length} sub={`Ouverts de plus de ${OVERDUE_AFTER_DAYS} jours`} icon={Hourglass} color="text-amber-600" />
+        <KpiCard label="Mes tickets assignés" value={issues.length} sub="Tickets ouverts sur mon périmètre" icon={<Clock size={15} />} color="text-blue-600" />
+        <KpiCard label="Urgents" value={urgent.length} sub="Critical / High en cours" icon={<AlertTriangle size={15} />} color="text-red-600" />
+        <KpiCard label="En cours" value={inProgress.length} sub="Statut In Progress" icon={<Clock size={15} />} color="text-orange-600" />
+        <KpiCard label="Terminés" value={closed.length} sub="Statut Closed" icon={<CheckCircle2 size={15} />} color="text-green-600" />
+        <KpiCard label="En retard" value={overdue.length} sub={`Ouverts de plus de ${OVERDUE_AFTER_DAYS} jours`} icon={<Hourglass size={15} />} color="text-amber-600" />
       </div>
       <Panel title="Mes tickets">
         <IssueTable issues={issues} onReset={onReset} filtersActive={false} />

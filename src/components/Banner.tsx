@@ -1,7 +1,7 @@
 "use client";
 
 // ============================================================
-// Bande d'images défilante en haut de chaque page
+// Bande d'images défilantes en haut de chaque page
 // Pour changer les images : modifier le tableau `images` ci-dessous
 // Les images sont dans le dossier public/banner/
 // ============================================================

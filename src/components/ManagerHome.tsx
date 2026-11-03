@@ -74,10 +74,10 @@ export default function ManagerHome(props: HomeProps) {
         subtitle={`Vue de supervision de l'équipe ${user.name} : charge, urgences, affectations et retards.`}
       />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Tickets à affecter" value={toAssign.length} sub="Ouverts sans assignation" icon={Layers} color="text-orange-600" />
-        <KpiCard label="Critiques / à haut risque" value={critical.length} sub="Ouverts avec priorité élevée" icon={AlertTriangle} color="text-red-600" />
-        <KpiCard label="En retard" value={overdue.length} sub={`Ouverts de plus de ${OVERDUE_AFTER_DAYS} jours`} icon={Hourglass} color="text-amber-600" />
-        <KpiCard label="Charge max. (agent)" value={topWorkload} sub="Tickets ouverts en cours" icon={Users} color="text-blue-600" />
+        <KpiCard label="Tickets à affecter" value={toAssign.length} sub="Ouverts sans assignation" icon={<Layers size={15} />} color="text-orange-600" />
+        <KpiCard label="Critiques / à haut risque" value={critical.length} sub="Ouverts avec priorité élevée" icon={<AlertTriangle size={15} />} color="text-red-600" />
+        <KpiCard label="En retard" value={overdue.length} sub={`Ouverts de plus de ${OVERDUE_AFTER_DAYS} jours`} icon={<Hourglass size={15} />} color="text-amber-600" />
+        <KpiCard label="Charge max. (agent)" value={topWorkload} sub="Tickets ouverts en cours" icon={<Users size={15} />} color="text-blue-600" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

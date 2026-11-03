@@ -8,6 +8,7 @@ import { PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALU
 import IssueTable from "./IssueTable";
 import Analysis from "./Analysis";
 import SessionControls from "./SessionControls";
+import Banner from "./Banner";
 import Sidebar from "./Sidebar";
 import AdminHome from "./AdminHome";
 import ManagerHome from "./ManagerHome";
@@ -181,6 +182,9 @@ export default function Dashboard({
 
   return (
     <div>
+      {/* Grande bannière d'images défilantes (refonte design) */}
+      <Banner />
+
       {/* Bande d'information Gmail / dernière synchronisation (Task 5) */}
       {canAccessGmail && syncNote && (
         <div className="border-b border-zinc-200 bg-zinc-50">

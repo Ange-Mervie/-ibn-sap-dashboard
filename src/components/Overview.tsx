@@ -12,23 +12,23 @@ function KpiCard({
   label,
   value,
   sub,
-  icon: Icon,
+  icon,
   color,
 }: {
   label: string;
   value: string | number;
   sub: string;
-  icon: React.ElementType;
+  icon: React.ReactNode;
   color: string;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-zinc-500">{label}</p>
-        <Icon size={16} className={color} />
+    <div className="ibn-card p-4">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 ${color}`}>{icon}</span>
       </div>
-      <p className={`mt-2 text-2xl font-bold ${color}`}>{value}</p>
-      <p className="mt-1 text-[11px] text-zinc-400">{sub}</p>
+      <p className={`mt-3 text-2xl font-bold tracking-tight text-slate-900 ${color}`}>{value}</p>
+      <p className="mt-1 text-[11px] leading-snug text-slate-400">{sub}</p>
     </div>
   );
 }
@@ -128,16 +128,16 @@ export default function Overview({
 
       {/* KPI */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <KpiCard label="Total tickets" value={issues.length} sub={issues.length === total ? "Tous les tickets" : `sur ${total} au total`} icon={Layers} color="text-zinc-900" />
-        <KpiCard label="Clôturés" value={stats.closed.length} sub="Statut Closed" icon={CheckCircle2} color="text-green-600" />
-        <KpiCard label="Ouverts" value={stats.open.length} sub="Tous statuts non clôturés" icon={Clock} color="text-blue-600" />
-        <KpiCard label="Critical + High" value={stats.urgent.length} sub="Priorités les plus urgentes" icon={AlertTriangle} color="text-red-600" />
-        <KpiCard label="Bloqués / en attente" value={stats.waiting.length} sub="Blocked, On Hold, attente client" icon={Hourglass} color="text-orange-600" />
+        <KpiCard label="Total tickets" value={issues.length} sub={issues.length === total ? "Tous les tickets" : `sur ${total} au total`} icon={<Layers size={15} />} color="text-zinc-900" />
+        <KpiCard label="Clôturés" value={stats.closed.length} sub="Statut Closed" icon={<CheckCircle2 size={15} />} color="text-green-600" />
+        <KpiCard label="Ouverts" value={stats.open.length} sub="Tous statuts non clôturés" icon={<Clock size={15} />} color="text-blue-600" />
+        <KpiCard label="Critical + High" value={stats.urgent.length} sub="Priorités les plus urgentes" icon={<AlertTriangle size={15} />} color="text-red-600" />
+        <KpiCard label="Bloqués / en attente" value={stats.waiting.length} sub="Blocked, On Hold, attente client" icon={<Hourglass size={15} />} color="text-orange-600" />
         <KpiCard
           label="Délai moyen"
           value={stats.avg !== null ? `${stats.avg.toFixed(1)} j` : "—"}
           sub={`${stats.delays.length}/${issues.length} tickets avec dates valides`}
-          icon={Timer}
+          icon={<Timer size={15} />}
           color="text-zinc-900"
         />
       </div>
