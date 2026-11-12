@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { RefreshCw, Plug } from "lucide-react";
-import type { SyncRun, EmailMessage } from "@/db/schema";
+import type { SyncRun } from "@/db/schema";
 
 export function SyncControls({
   configured,

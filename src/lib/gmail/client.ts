@@ -14,7 +14,6 @@ export type FetchLike = typeof fetch;
 
 export async function listGmailMessages(opts: { accessToken: string; fetchImpl?: FetchLike }): Promise<GmailMessage[]> {
   const doFetch: FetchLike = opts.fetchImpl ?? fetch;
-  const query = `in:${GMAIL.syncLabel || "SAP"}`;
   const res = await doFetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50", {
     method: "GET",
     headers: {

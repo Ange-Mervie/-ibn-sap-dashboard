@@ -28,7 +28,7 @@ function labelPaiement(p: string): string {
 export default async function ManagerPaiementsPage() {
   const session = await getSession();
   if (!session) redirect("/login?from=%2Fmanager%2Fpaiements");
-  if (!canReadPayments(session.role, "", session.email)) redirect("/login?from=%2Fmanager%2Fpaiements");
+  if (!canReadPayments(session.role)) redirect("/login?from=%2Fmanager%2Fpaiements");
 
   const payments = await db.select().from(workPayments).orderBy(desc(workPayments.createdAt));
   const totalDue = payments.reduce((s, p) => s + (p.amountPlanned || 0), 0);

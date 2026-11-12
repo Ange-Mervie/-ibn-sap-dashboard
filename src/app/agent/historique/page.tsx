@@ -1,11 +1,12 @@
-import { getSession } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { db } from "@/db";
 import { ticketEvents } from "@/db/schema";
-import { eq } from "drizzle-orm";
+
+export const instant = false;
 
 export default async function Page() {
   const session = await getSession();
-  if (!session) return <p>Non authentifié</p>;
+  if (!session) return <p>Non authentifiÃ©</p>;
   const events = await db.select().from(ticketEvents);
   const mine = events.filter((e) => e.changedBy === session.name);
   return (
@@ -22,3 +23,4 @@ export default async function Page() {
     </div>
   );
 }
+

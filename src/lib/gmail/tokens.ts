@@ -1,5 +1,4 @@
 // Stockage des jetons OAuth Gmail en base (table gmail_tokens, ligne unique).
-import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { gmailTokens } from "@/db/schema";
 import { refreshAccessToken, type GmailTokens } from "./oauth";

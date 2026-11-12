@@ -42,10 +42,7 @@ export default function ManagerInterventionsPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedId) {
-      setTicket(null);
-      return;
-    }
+    if (!selectedId) return;
     let cancelled = false;
     async function loadTicket() {
       const r = await fetch(`/api/tickets/${encodeURIComponent(selectedId)}`, { cache: "no-store" });

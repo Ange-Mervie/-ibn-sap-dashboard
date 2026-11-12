@@ -23,41 +23,45 @@ export async function POST(req: Request) {
     return jsonError(400, "Email et mot de passe requis.");
   }
 
-  // Rechercher l'utilisateur — même message d'erreur si introuvable ou mauvais mdp
-  // (anti-énumération d'utilisateurs)
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+  try {
+    // Rechercher l'utilisateur — même message d'erreur si introuvable ou mauvais mdp
+    // (anti-énumération d'utilisateurs)
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
-  // Vérifier le mot de passe même si l'utilisateur n'existe pas (évite timing attack)
-  const dummyHash = "0000000000000000:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-  const passwordOk = await verifyPassword(password, user?.passwordHash ?? dummyHash);
+    // Vérifier le mot de passe même si l'utilisateur n'existe pas (évite timing attack)
+    const dummyHash = "0000000000000000:0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    const passwordOk = await verifyPassword(password, user?.passwordHash ?? dummyHash);
 
-  if (!user || !passwordOk) {
-    return jsonError(401, "Email ou mot de passe incorrect.");
-  }
+    if (!user || !passwordOk) {
+      return jsonError(401, "Email ou mot de passe incorrect.");
+    }
 
-  if (!user.active) {
-    return jsonError(403, "Ce compte est désactivé. Contactez un administrateur.");
-  }
+    if (!user.active) {
+      return jsonError(403, "Ce compte est désactivé. Contactez un administrateur.");
+    }
 
-  // Créer la session (pose le cookie httpOnly)
-  await createSession({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-  });
-
-  // Ne jamais inclure passwordHash dans la réponse
-  return Response.json({
-    user: {
+    // Créer la session (pose le cookie httpOnly)
+    await createSession({
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-    },
-  });
+    });
+
+    // Ne jamais inclure passwordHash dans la réponse
+    return Response.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    return jsonError(500, `Erreur d'authentification : ${err instanceof Error ? err.message : "erreur inconnue"}`);
+  }
 }

@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { t, type Locale } from "@/lib/i18n";
 
-export default function LoginForm({ redirectTo }: { redirectTo: string }) {
+export default function LoginForm({ redirectTo, locale = "fr" }: { redirectTo: string; locale?: Locale }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +25,6 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
       });
 
       if (res.ok) {
-        // Redirection vers la page d'origine ou l'accueil
         const safeRedirect = redirectTo.startsWith("/") && !redirectTo.startsWith("//") && !redirectTo.includes("\\")
           ? redirectTo
           : "/";
@@ -32,10 +32,10 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Erreur de connexion. Veuillez réessayer.");
+        setError(data.error ?? (locale === "fr" ? "Erreur de connexion. Veuillez réessayer." : "Login failed. Please try again."));
       }
     } catch {
-      setError("Impossible de joindre le serveur. Vérifiez votre connexion.");
+      setError(locale === "fr" ? "Impossible de joindre le serveur. Vérifiez votre connexion." : "Unable to reach the server. Check your connection.");
     } finally {
       setLoading(false);
     }
@@ -43,10 +43,9 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
 
   return (
     <form onSubmit={handleSubmit} data-login-form className="space-y-5">
-      {/* Champ Email */}
       <div>
         <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-blue-100">
-          Adresse e-mail
+          {t(locale, "loginEmail")}
         </label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -61,16 +60,15 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="votre@email.com"
+            placeholder={locale === "fr" ? "votre@email.com" : "you@example.com"}
             className="w-full rounded-lg border border-white/10 bg-white/10 py-3 pl-10 pr-4 text-sm text-white placeholder-blue-200/30 outline-none ring-0 transition focus:border-blue-400 focus:bg-white/15 focus:ring-1 focus:ring-blue-400"
           />
         </div>
       </div>
 
-      {/* Champ Mot de passe */}
       <div>
         <label htmlFor="login-password" className="mb-1.5 block text-sm font-medium text-blue-100">
-          Mot de passe
+          {t(locale, "loginPassword")}
         </label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -90,9 +88,9 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
           />
           <button
             type="button"
-            aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            aria-label={showPassword ? (locale === "fr" ? "Masquer le mot de passe" : "Hide password") : (locale === "fr" ? "Afficher le mot de passe" : "Show password")}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-300/50 hover:text-blue-300 transition"
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-blue-300/50 transition hover:text-blue-300"
           >
             {showPassword ? (
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +106,6 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
       </div>
 
-      {/* Message d'erreur */}
       {error && (
         <div
           role="alert"
@@ -122,7 +119,6 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
         </div>
       )}
 
-      {/* Bouton de connexion */}
       <button
         id="login-submit"
         type="submit"
@@ -135,10 +131,10 @@ export default function LoginForm({ redirectTo }: { redirectTo: string }) {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Connexion…
+            {t(locale, "loginLoading")}
           </span>
         ) : (
-          "Se connecter"
+          t(locale, "loginSubmit")
         )}
       </button>
     </form>

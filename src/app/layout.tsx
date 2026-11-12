@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "IBN Group — Suivi des incidents SAP",
-  description:
-    "Tableau de bord de suivi et d'analyse des incidents SAP  D'IBN GROUP SARL",
+  title: "IBN Group — SAP Incident Tracking",
+  description: "Tableau de bord de suivi et d'analyse des incidents SAP d'IBN Group SARL.",
 };
 
 export default function RootLayout({

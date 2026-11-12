@@ -1,7 +1,4 @@
-// ============================================================
-// En-tête de section IBN — bannière navy avec identité visuelle
-// Modifier `image` pour changer l'image de fond
-// ============================================================
+import Image from "next/image";
 
 type SectionHeaderProps = {
   title: string;
@@ -13,7 +10,7 @@ export default function SectionHeader({ title, subtitle, image }: SectionHeaderP
   return (
     <div className="relative mb-8 overflow-hidden rounded-2xl bg-[#0a1f44] shadow-sm">
       {image ? (
-        <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <Image src={image} alt="" fill sizes="100vw" className="object-cover" />
       ) : null}
       <div className="absolute inset-0 bg-gradient-to-r from-[#060f24]/95 via-[#0a1f44]/80 to-[#0b2545]/70" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />

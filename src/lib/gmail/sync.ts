@@ -1,10 +1,12 @@
-// Orchestration Gmail : sync (list + staging) et dernier état.
-import { eq } from "drizzle-orm";
+﻿// Orchestration Gmail : sync (list + staging) et dernier Ã©tat.
 import { db } from "@/db";
-import { emailMessages, gmailTokens, syncRuns, type EmailMessage, type SyncRun } from "@/db/schema";
+import { emailMessages, syncRuns, type EmailMessage, type SyncRun } from "@/db/schema";
 import { GMAIL, isGmailConfigured } from "./config";
 import { listGmailMessages, matchGmailMessage, type FetchLike, type GmailMessage } from "./client";
-import { buildAuthUrl, exchangeCode, refreshAccessToken, type GmailTokens } from "./oauth";
+import { buildAuthUrl, exchangeCode, refreshAccessToken } from "./oauth";
+import type { GmailTokens } from "./oauth";
+
+export type { GmailTokens };
 
 export type GmailSyncResult = {
   outcome: "ok" | "error" | "not_configured";
@@ -15,11 +17,11 @@ export type GmailSyncResult = {
 
 export async function runGmailSync(opts: { accessToken?: string; fetchImpl?: FetchLike } = {}): Promise<GmailSyncResult> {
   if (!isGmailConfigured()) {
-    return { outcome: "not_configured", fetched: 0, newMessages: 0, detail: "Gmail non configuré : renseigner GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET." };
+    return { outcome: "not_configured", fetched: 0, newMessages: 0, detail: "Gmail non configurÃ© : renseigner GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET." };
   }
   const accessToken = opts.accessToken;
   if (!accessToken) {
-    return { outcome: "not_configured", fetched: 0, newMessages: 0, detail: "Aucun jeton d'accès Gmail : exécuter /api/gmail/auth-url → /api/gmail/callback." };
+    return { outcome: "not_configured", fetched: 0, newMessages: 0, detail: "Aucun jeton d'accÃ¨s Gmail : exÃ©cuter /api/gmail/auth-url â†’ /api/gmail/callback." };
   }
   const doFetch: FetchLike = opts.fetchImpl ?? fetch;
   const messages = await listGmailMessages({ accessToken, fetchImpl: doFetch });
@@ -69,4 +71,5 @@ export async function lastSync(): Promise<SyncRun | null> {
 }
 
 export { buildAuthUrl, exchangeCode, refreshAccessToken, GMAIL };
-export type { GmailTokens, EmailMessage };
+export type { EmailMessage };
+

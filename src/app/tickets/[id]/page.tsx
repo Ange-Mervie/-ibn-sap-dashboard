@@ -458,9 +458,7 @@ export default async function TicketDetailPage({ params }: PageProps) {
         </section>
 
         <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="mb-5 text-lg font-bold">
-            {canEditThisTicket ? "Commentaires" : "Commentaires"}
-          </h2>
+          <h2 className="mb-5 text-lg font-bold">Commentaires</h2>
 
           {canEditThisTicket && <form data-comment-form action={addComment} className="space-y-4">
             <p className="text-sm text-zinc-500">Commentaire ajouté sous le nom de {session.name}.</p>

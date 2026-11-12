@@ -1,6 +1,6 @@
-import { desc, inArray } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import { db } from "@/db";
-import { workPayments, tickets } from "@/db/schema";
+import { workPayments } from "@/db/schema";
 import { getSession } from "@/lib/auth";
 import { canReadPayments } from "@/lib/access";
 import { redirect } from "next/navigation";
@@ -28,17 +28,9 @@ function labelPaiement(p: string): string {
 export default async function AdminPaymentsPage() {
   const session = await getSession();
   if (!session) redirect("/login?from=%2Fadmin%2Fpayments");
-  if (!canReadPayments(session.role, "", session.email)) redirect("/login?from=%2Fadmin%2Fpayments");
+  if (!canReadPayments(session.role)) redirect("/login?from=%2Fadmin%2Fpayments");
 
   const payments = await db.select().from(workPayments).orderBy(desc(workPayments.createdAt));
-
-  const ticketIds = Array.from(new Set(payments.map((p) => p.ticketId)));
-  const ticketRows =
-    ticketIds.length > 0
-      ? await db.select().from(tickets).where(inArray(tickets.id, ticketIds))
-      : [];
-  const ticketById = new Map<string, (typeof tickets.$inferSelect)>();
-  for (const t of ticketRows) ticketById.set(t.id, t);
 
   const validated = payments.filter((p) => p.validationStatus === "validated");
   const totalDue = payments.reduce((s, p) => s + (p.amountPlanned || 0), 0);
@@ -46,7 +38,6 @@ export default async function AdminPaymentsPage() {
   const totalRemaining = payments.reduce((s, p) => s + (p.balance || 0), 0);
   const paidCount = payments.filter((p) => p.paymentStatus === "paid").length;
   const partialCount = payments.filter((p) => p.paymentStatus === "partial").length;
-  const pendingCount = payments.filter((p) => p.paymentStatus === "to_pay" || p.paymentStatus === "pending").length;
   const notValidatedCount = payments.filter((p) => p.validationStatus !== "validated").length;
 
   return (

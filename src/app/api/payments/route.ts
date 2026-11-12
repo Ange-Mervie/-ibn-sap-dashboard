@@ -52,10 +52,9 @@ export async function POST(req: Request) {
   if (!agentId) return jsonError(400, "L'agent est requis.");
   if (!Number.isInteger(amountPlanned) || amountPlanned < 0) return jsonError(400, "Le montant prévu est invalide.");
   if (!Number.isInteger(amountPaid) || amountPaid < 0) return jsonError(400, "Le montant payé est invalide.");
-  if (!Number.isInteger(paymentStatus) && !(PAYMENT_STATUSES as readonly string[]).includes(paymentStatus)) {
+  if (!(PAYMENT_STATUSES as readonly string[]).includes(paymentStatus)) {
     return jsonError(400, "Le statut du paiement est invalide.");
   }
-  if (!Number.isInteger(amountPaid) || amountPaid < 0) return jsonError(400, "Le montant payé est invalide.");
 
   const ticket = await db.select().from(tickets).where(eq(tickets.id, ticketId)).limit(1);
   if (!ticket[0]) return jsonError(404, "Ticket introuvable.");
@@ -86,7 +85,6 @@ export async function POST(req: Request) {
     .from(workPayments)
     .where(eq(workPayments.ticketId, ticketId))
     .orderBy(desc(workPayments.createdAt));
-  const payment = payments[0];
 
   return Response.json({ payments }, { status: 201 });
 }

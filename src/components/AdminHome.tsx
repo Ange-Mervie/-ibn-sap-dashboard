@@ -1,32 +1,27 @@
 "use client";
 
 import { useMemo } from "react";
-import { AlertTriangle, CheckCircle2, Clock, Hourglass, Layers } from "lucide-react";
-import type { Issue, Filters, DimKey, IssueData } from "@/lib/issues";
-import { isOpen, ageDays, resolutionDays, countBy, STATUSES, PRIORITIES } from "@/lib/issues";
+import { AlertTriangle, CheckCircle2, Clock, Layers } from "lucide-react";
+import type { Issue } from "@/lib/issues";
+import { isOpen, ageDays, resolutionDays, countBy, PRIORITIES } from "@/lib/issues";
 import { Panel, ChartBox, StatusPie, CountBars, HorizontalBars, TimelineBars, PRIORITY_COLORS } from "./Charts";
 import KpiCard from "./KpiCard";
-import IssueTable from "./IssueTable";
 import { monthlyTimeline } from "./Overview";
 import type { HomeProps } from "./homeProps";
 
 export default function AdminHome(props: HomeProps) {
-  const { issues, total, charts, filters, onToggle, onToggleMonth, onReset } = props;
+  const { issues, total, charts, filters, onToggle, onToggleMonth } = props;
 
   const stats = useMemo(() => {
     const closed = issues.filter((i) => !isOpen(i));
     const open = issues.filter((i) => isOpen(i));
-    const urgent = open.filter((i) => i.priority === "Critical" || i.priority === "High");
-    const waiting = open.filter(
-      (i) => isOpen(i) && ["Blocked", "On Hold", "waiting for Customer"].includes(i.status)
-    );
     const delays = issues.map(resolutionDays).filter((x): x is number => x !== null);
     const avg = delays.length ? delays.reduce((a, b) => a + b, 0) / delays.length : null;
     const overdue = open.filter((i) => {
       const a = ageDays(i);
       return a !== null && a >= 30;
     });
-    return { closed, open, urgent, waiting, delays, avg, overdue };
+    return { closed, open, delays, avg, overdue };
   }, [issues]);
 
   const timeline = useMemo(() => monthlyTimeline(issues), [issues]);

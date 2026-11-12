@@ -1,6 +1,6 @@
-// ============================================================
-// src/proxy.ts — Protection des routes (Next.js 16)
-// NOTE : Dans Next.js 16, middleware.ts est DÉPRÉCIÉ → proxy.ts
+﻿// ============================================================
+// src/proxy.ts â€” Protection des routes (Next.js 16)
+// NOTE : Dans Next.js 16, middleware.ts est DÃ‰PRÃ‰CIÃ‰ â†’ proxy.ts
 //        L'export s'appelle `proxy` (et non plus `middleware`).
 // ============================================================
 import { NextResponse } from "next/server";
@@ -59,7 +59,7 @@ export function proxy(request: NextRequest): NextResponse {
   const isInternalApi = pathname.startsWith("/api/") && pathname !== "/api/auth/login";
 
   if (isInternalApi && !isAuthenticated) {
-    return NextResponse.json({ error: "Non authentifié. Veuillez vous connecter." }, { status: 401 });
+    return NextResponse.json({ error: "Non authentifiÃ©. Veuillez vous connecter." }, { status: 401 });
   }
 
   const isProtectedPage = PROTECTED_PAGES.some((re) => re.test(pathname));
@@ -77,7 +77,7 @@ export function proxy(request: NextRequest): NextResponse {
   if (isWriteApi && (method === "POST" || method === "PATCH" || method === "DELETE")) {
     if (!isAuthenticated) {
       return NextResponse.json(
-        { error: "Non authentifié. Veuillez vous connecter." },
+        { error: "Non authentifiÃ©. Veuillez vous connecter." },
         { status: 401 }
       );
     }
@@ -91,3 +91,4 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|public/|banner/).*)",
   ],
 };
+
