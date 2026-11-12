@@ -24,8 +24,8 @@ export default async function AdminPage() {
     <main className="min-h-screen bg-zinc-50">
       {/* En-tête */}
       <header className="border-b border-zinc-200 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <div>
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-5 text-center sm:flex-row sm:justify-center sm:text-left">
+          <div className="sm:flex-1 sm:text-center">
             <h1 className="text-lg font-bold text-zinc-900">
               Administration — Gestion des utilisateurs
             </h1>
@@ -33,7 +33,7 @@ export default async function AdminPage() {
               IBN Group SARL · Rôle : Administrateur · {session.name}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <SessionControls user={{ name: session.name, email: session.email, role: session.role }} />
             <Link
               href="/"

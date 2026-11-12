@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   const name = typeof raw.name === "string" ? raw.name.trim() : "";
   const email = typeof raw.email === "string" ? raw.email.trim().toLowerCase() : "";
   const password = typeof raw.password === "string" ? raw.password : "";
-  const role = typeof raw.role === "string" ? raw.role : "viewer";
+  const role = typeof raw.role === "string" ? raw.role : "agent";
 
   const errors: string[] = [];
   if (name.length < 2) errors.push("Le nom doit contenir au moins 2 caractères.");

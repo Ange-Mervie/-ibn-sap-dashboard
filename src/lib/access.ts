@@ -1,10 +1,24 @@
-export type WorkspaceRole = "admin" | "manager" | "agent" | "viewer";
+import type { Role } from "@/db/schema";
+
+export type WorkspaceRole = Role;
 
 export function sameIdentity(value: string | null | undefined, email: string): boolean {
-  return Boolean(value?.trim() && email.trim() && value.trim().toLowerCase() === email.trim().toLowerCase());
+  return Boolean(
+    value?.trim() &&
+      email.trim() &&
+      value.trim().toLowerCase() === email.trim().toLowerCase()
+  );
 }
 
 export function canManageUsers(role: WorkspaceRole): boolean {
+  return role === "admin";
+}
+
+export function canCreateTickets(role: WorkspaceRole): boolean {
+  return role === "admin" || role === "manager";
+}
+
+export function canDeleteTickets(role: WorkspaceRole): boolean {
   return role === "admin";
 }
 
@@ -15,15 +29,14 @@ export function canReadReports(
   email: string
 ): boolean {
   if (role === "admin" || role === "manager") return true;
-  if (role === "agent") return sameIdentity(owner, email);
-  return role === "viewer" && status === "validated";
+  return role === "agent" && sameIdentity(owner, email);
 }
 
 export function canReadEvaluations(role: WorkspaceRole, owner: string, email: string): boolean {
   return role === "admin" || role === "manager" || (role === "agent" && sameIdentity(owner, email));
 }
 
-export function canReadPayments(role: WorkspaceRole, _owner: string, _email: string): boolean {
+export function canReadPayments(role: WorkspaceRole): boolean {
   return role === "admin" || role === "manager";
 }
 

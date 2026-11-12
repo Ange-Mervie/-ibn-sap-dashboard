@@ -111,8 +111,8 @@ export const REPORT_STATUSES = [
   "rejected",
 ] as const;
 
-// --- rôles utilisateurs (MANAGER préparé pour évolution future) ---
-export const ROLES = ["admin", "agent", "viewer", "manager"] as const;
+// --- rôles utilisateurs ---
+export const ROLES = ["admin", "agent", "manager"] as const;
 export type Role = (typeof ROLES)[number];
 
 // --- utilisateurs (authentification RBAC) ---
@@ -124,7 +124,7 @@ export const users = mysqlTable(
     email: varchar("email", { length: 150 }).notNull(),
     // Mot de passe stocké uniquement sous forme de hash scrypt — jamais en clair
     passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-    role: mysqlEnum("role", ROLES).notNull().default("viewer"),
+    role: mysqlEnum("role", ROLES).notNull().default("agent"),
     active: boolean("active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),

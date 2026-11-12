@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const ROLES = ["admin", "manager", "agent", "viewer"] as const;
+const ROLES = ["admin", "manager", "agent"] as const;
 type Role = (typeof ROLES)[number];
 
 type ManagedUser = {
@@ -19,7 +19,6 @@ const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrateur",
   manager: "Manager",
   agent: "Agent",
-  viewer: "Observateur",
 };
 
 const fieldClass =
@@ -36,7 +35,7 @@ export default function UserManagementTable({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("viewer");
+  const [role, setRole] = useState<Role>("agent");
   const [busyId, setBusyId] = useState<number | "create" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const activeAdmins = users.filter((user) => user.active && user.role === "admin").length;
@@ -64,7 +63,7 @@ export default function UserManagementTable({
       setName("");
       setEmail("");
       setPassword("");
-      setRole("viewer");
+      setRole("agent");
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Impossible de créer le compte.");

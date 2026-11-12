@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
+import { t, type Locale } from "@/lib/i18n";
 
 export type SidebarItem = {
   id: string;
@@ -22,6 +23,7 @@ export default function Sidebar({
   onLogout,
   open = false,
   onOpenChange,
+  locale = "fr",
 }: {
   items: SidebarItem[];
   active: string;
@@ -30,12 +32,13 @@ export default function Sidebar({
   onLogout?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  locale?: Locale;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const groups: { name: string; items: SidebarItem[] }[] = [];
   const map = new Map<string, SidebarItem[]>();
   for (const it of items) {
-    const g = it.group ?? "General";
+    const g = it.group ?? t(locale, "general");
     const list = map.get(g) ?? [];
     list.push(it);
     map.set(g, list);
@@ -72,7 +75,7 @@ export default function Sidebar({
   }
 
   const groupsBlock = (
-    <nav className={`flex-1 overflow-y-auto px-3 pb-4 ${collapsed ? "px-2" : ""}`}>
+    <nav className={`h-full overflow-y-auto px-3 pb-4 ${collapsed ? "px-2" : ""}`}>
       {groups.map((g) => (
         <div key={g.name} className="mb-3">
           {!collapsed ? (
@@ -86,13 +89,17 @@ export default function Sidebar({
     </nav>
   );
 
+  const roleLabel = user ? t(locale, (`role_${user.role}` as "role_admin")) : "";
+
   const profileBlock = user ? (
     <div className={`border-t border-white/10 px-3.5 py-3 ${collapsed ? "px-2" : ""}`}>
       {collapsed ? (
         <div className="flex items-center justify-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white overflow-hidden"><Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" /></div>
+          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-white">
+            <Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" />
+          </div>
           {onLogout ? (
-            <button type="button" onClick={onLogout} aria-label="Se déconnecter" className="rounded-md px-2 py-1.5 text-slate-300 hover:bg-white/10">
+            <button type="button" onClick={onLogout} aria-label={t(locale, "logout")} className="rounded-md px-2 py-1.5 text-slate-300 hover:bg-white/10">
               ⏻
             </button>
           ) : null}
@@ -101,10 +108,10 @@ export default function Sidebar({
         <>
           <div className="text-sm font-semibold text-white">{user.name}</div>
           <div className="truncate text-xs text-slate-400">{user.email}</div>
-          <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-300">{user.role}</div>
+          <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-blue-300">{roleLabel}</div>
           {onLogout ? (
             <button type="button" onClick={onLogout} className="mt-2 w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10">
-              Se déconnecter
+              {t(locale, "logout")}
             </button>
           ) : null}
         </>
@@ -114,21 +121,23 @@ export default function Sidebar({
 
   const sidebarBody = (
     <>
-      <div className={`flex items-center ${collapsed ? "justify-center px-0 pb-4" : "gap-2 px-5 pb-4 pt-5"}`}>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white overflow-hidden"><Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" /></div>
+      <div className={`flex flex-col items-center text-center ${collapsed ? "px-0 pb-5 pt-5" : "px-4 pb-6 pt-6"}`}>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+          <Image src="/IBN Logo.png" alt="IBN Group" width={36} height={36} className="object-contain" />
+        </div>
         {!collapsed ? (
-          <div className="min-w-0">
-            <div className="truncate text-sm font-bold text-white">IBN GROUP</div>
-            <div className="truncate text-[11px] text-slate-400">Suivi des incidents SAP</div>
-          </div>
-        ) : null}
-        {!collapsed ? (
-          <button type="button" onClick={() => setCollapsed(true)} aria-label="Réduire la sidebar" className="ml-auto rounded-md px-2 py-1.5 text-slate-300 hover:bg-white/10">
-            ◂
-          </button>
+          <>
+            <div className="mt-3 min-w-0">
+              <div className="truncate text-sm font-bold text-white">IBN GROUP</div>
+              <div className="truncate text-[11px] text-slate-400">{t(locale, "appSubtitle")}</div>
+            </div>
+            <button type="button" onClick={() => setCollapsed(true)} aria-label={t(locale, "collapseSidebar")} className="mt-2 rounded-md px-2 py-1.5 text-slate-300 hover:bg-white/10">
+              ◂
+            </button>
+          </>
         ) : null}
       </div>
-      {groupsBlock}
+      <div className="mt-2 flex-1 overflow-hidden">{groupsBlock}</div>
       {profileBlock}
     </>
   );
@@ -143,18 +152,18 @@ export default function Sidebar({
           <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange?.(false)} />
           <div className="absolute left-0 top-0 h-full w-64 bg-slate-900">
             <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between px-3 pt-6 pb-5">
+              <div className="flex items-center justify-between px-3 pb-5 pt-6">
                 <div className="flex items-center gap-2.5 px-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white overflow-hidden">
-          <Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" />
-        </div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+                    <Image src="/IBN Logo.png" alt="IBN Group" width={32} height={32} className="object-contain" />
+                  </div>
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-white">IBN GROUP</div>
-                    <div className="text-[11px] text-slate-400">Suivi des incidents SAP</div>
+                    <div className="text-[11px] text-slate-400">{t(locale, "appSubtitle")}</div>
                   </div>
                 </div>
-                <button type="button" onClick={() => onOpenChange?.(false)} aria-label="Fermer le menu" className="rounded-md px-2 py-2 text-slate-300 hover:bg-white/10">
-                  Fermer
+                <button type="button" onClick={() => onOpenChange?.(false)} aria-label={t(locale, "closeMenu")} className="rounded-md px-2 py-2 text-slate-300 hover:bg-white/10">
+                  {locale === "fr" ? "Fermer" : "Close"}
                 </button>
               </div>
               {groupsBlock}

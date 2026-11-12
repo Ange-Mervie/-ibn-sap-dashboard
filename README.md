@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# IBN SAP Dashboard
 
-## Getting Started
+Application web de suivi des incidents SAP pour **IBN Group SARL** (Next.js 16, React 19, TypeScript, Tailwind CSS 4, Drizzle ORM, MySQL 8).
 
-First, run the development server:
+## Fonctionnalités principales
+- Authentification par session JWT signée (`httpOnly` cookie) avec rôles : `admin`, `manager`, `agent`.
+- Tableaux de bord et espaces dédiés par rôle (supervision, suivi tickets, rapports, paiements, etc.).
+- Gestion des tickets SAP (création, consultation, mise à jour, commentaires, historique), rapports d’intervention, évaluations et paiements.
+- Filtrage global combinable (statut/priorité/module/paiement/période), graphiques et indicateurs calculés à partir des données.
+- Import/contrôle des données Excel vers MySQL + contrôles qualité.
+- Intégration Gmail (préparée/configurable) pour synchronisation/staging de messages.
+- **Internationalisation FR/EN** : sélecteur de langue (FR | EN) sur la page de connexion et dans l’en-tête/session, préférence persistée par cookie (`ibn_locale`), `lang` HTML dynamique.
 
+## Prérequis
+- Node.js `>= 22.12.0` et npm `>= 10`
+- MySQL 8.x (base `ibn_dashboard` ou via `DATABASE_URL`)
+- Accès au fichier Excel source si import nécessaire (`data/IBN-SAP SUPPORT-Issue-Tracking-SCDP UPDATED.xlsx`)
+
+## Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
+# Renseigner DATABASE_URL et SESSION_SECRET dans .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables importantes (`.env.example`) :
+- `DATABASE_URL` : connexion MySQL
+- `SESSION_SECRET` : secret de signature session (>= 32 caractères recommandé)
+- `GMAIL_*` : configuration OAuth Gmail (optionnel)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Base de données
+```bash
+npm run db:generate   # générer migrations Drizzle
+npm run db:migrate    # appliquer migrations
+npm run db:import     # importer le classeur Excel vers MySQL
+npm run db:check      # contrôle cohérence base
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Démarrage
+```bash
+npm run dev      # développement (http://localhost:3000)
+npm run build    # build production
+npm start        # serveur production
+```
 
-## Learn More
+## Qualité et vérifications
+```bash
+npm run lint
+npx tsc --noEmit
+npm run check:security
+npm run check:gmail
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Structure (aperçu)
+- `src/app/` : pages App Router et routes API (`/api/...`)
+- `src/components/` : UI (Dashboard, Sidebar, formulaires, vues par rôle)
+- `src/lib/` : auth, accès RBAC, chargement données, validation, i18n, Gmail, utilitaires
+- `src/db/` : schéma Drizzle et connexion
+- `drizzle/` : migrations
+- `scripts/` : import, contrôles et utilitaires
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Sécurité & accès
+- Vérification de session côté serveur (`getSession`) avec contrôle du compte actif en base.
+- Contrôles d’autorisation par rôle sur pages/routes sensibles et filtrage des données selon le périmètre (ex. agent limité à ses tickets).
+- Création de tickets réservée aux rôles `admin` et `manager`.
+- Validation serveur des entrées et réponses d’erreur uniformisées pour les routes API.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Langue (FR/EN)
+- Défaut : français.
+- Changement via le commutateur FR/EN (login et espace connecté).
+- La préférence est stockée dans le cookie `ibn_locale` et appliquée au rendu (`<html lang="...">`).
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Déploiement
+- Docker : `Dockerfile`, `docker-compose.yml` fournis.
+- Configurer les variables d’environnement (`DATABASE_URL`, `SESSION_SECRET`, `GMAIL_*` si utilisé) dans l’environnement cible.

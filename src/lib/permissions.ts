@@ -26,22 +26,22 @@ export function can(user: User, action: Action, ticket?: Ticket): boolean {
   switch (action) {
     case "ticket.read":
       if (role === "agent") return !!ticket && ticket.assignee.toLowerCase() === user.email.toLowerCase();
-      return role === "admin" || role === "manager" || role === "viewer";
+      return role === "admin" || role === "manager";
     case "ticket.create":
+      return role === "admin" || role === "manager";
     case "ticket.update":
     case "ticket.delete":
+      return role === "admin" || role === "manager";
     case "ticket.status":
       if (role === "admin" || role === "manager") return true;
-      if (role === "agent")
-        return !!ticket && ticket.assignee.toLowerCase() === user.email.toLowerCase() && action === "ticket.status";
-      return false;
+      return !!ticket && role === "agent" && ticket.assignee.toLowerCase() === user.email.toLowerCase();
     case "ticket.comment":
       if (role === "admin" || role === "manager") return true;
       if (role === "agent") return !!ticket && ticket.assignee.toLowerCase() === user.email.toLowerCase();
       return false;
     case "dashboard.view":
     case "export.csv":
-      return role === "admin" || role === "manager" || role === "agent" || role === "viewer";
+      return role === "admin" || role === "manager" || role === "agent";
     case "import.excel":
     case "users.manage":
       return role === "admin";

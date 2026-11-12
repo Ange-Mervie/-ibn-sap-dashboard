@@ -1,10 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users, Bell, Menu } from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
 import { PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY, isOpen } from "@/lib/issues";
+import { t, type Locale } from "@/lib/i18n";
 import IssueTable from "./IssueTable";
 import Analysis from "./Analysis";
 import SessionControls from "./SessionControls";
@@ -13,72 +15,27 @@ import Sidebar from "./Sidebar";
 import AdminHome from "./AdminHome";
 import ManagerHome from "./ManagerHome";
 import AgentHome from "./AgentHome";
-import ViewerHome from "./ViewerHome";
 import type { SidebarItem } from "./Sidebar";
-import type { HomeProps } from "./homeProps";
-
-// Sections de navigation (mobile)
-const SECTIONS = [
-  { id: "overview", label: "Vue générale", icon: LayoutDashboard },
-  { id: "tracking", label: "Suivi", icon: Table2 },
-  { id: "analysis", label: "Analyse", icon: BarChart3 },
-];
-
-// Navigation dédiée par rôle (refonte visuelle : 4 espaces distincts)
-// Chaque rubrique pointe vers une vraie route (href) — plus de bouton décoratif.
-const NAV: Record<string, SidebarItem[]> = {
-  admin: [
-    { id: "overview", label: "Vue générale", href: "/", icon: LayoutDashboard, group: "Général" },
-    { id: "tracking", label: "Tous les tickets", href: "/admin/tickets", icon: Table2, group: "Général" },
-    { id: "analysis", label: "Rapports & analyses", href: "/admin/reports", icon: BarChart3, group: "Général" },
-    { id: "admin", label: "Collaborateurs", href: "/admin", icon: Users, group: "Gestion" },
-    { id: "emails", label: "Comptes rendus & notifications", href: "/emails", icon: Bell, group: "Gestion" },
-  ],
-  manager: [
-    { id: "overview", label: "Supervision", href: "/", icon: LayoutDashboard, group: "Supervision" },
-    { id: "tracking", label: "Suivi des tickets", href: "/manager/tickets", icon: Table2, group: "Supervision" },
-    { id: "analysis", label: "Comptes rendus", href: "/manager/interventions", icon: BarChart3, group: "Supervision" },
-    { id: "agents", label: "Suivi des agents", href: "/manager/agents", icon: Users, group: "Supervision" },
-    { id: "assignation", label: "Affectation des tickets", href: "/manager/assignation", icon: Table2, group: "Supervision" },
-    { id: "paiements", label: "Paiements des agents", href: "/manager/paiements", icon: BarChart3, group: "Supervision" },
-    { id: "retards", label: "Retards et alertes", href: "/manager/retards", icon: AlertTriangle, group: "Supervision" },
-  ],
-  agent: [
-    { id: "overview", label: "Mon tableau de bord", href: "/", icon: LayoutDashboard, group: "Mon espace" },
-    { id: "tracking", label: "Mes tickets", href: "/agent/mes-tickets", icon: Table2, group: "Mon espace" },
-    { id: "analysis", label: "Mes interventions", href: "/agent/interventions", icon: BarChart3, group: "Mon espace" },
-  ],
-  viewer: [
-    { id: "overview", label: "Vue globale", href: "/", icon: LayoutDashboard, group: "Consultation" },
-    { id: "tracking", label: "Incidents", href: "/", icon: Table2, group: "Consultation" },
-    { id: "analysis", label: "Rapports", href: "/", icon: BarChart3, group: "Consultation" },
-  ],
-};
-
 
 export default function Dashboard({
   data,
   syncNote,
   user,
+  locale = "fr",
 }: {
   data: IssueData;
   syncNote?: { outcome: string; detail: string } | null;
   user: { name: string; email: string; role: string };
+  locale?: Locale;
 }) {
-  const canCreateTickets = user.role === "admin" || user.role === "agent";
+  const router = useRouter();
+  const canCreateTickets = user.role === "admin" || user.role === "manager";
   const canAccessGmail = user.role === "admin";
-  // ==========================================================
-  // ÉTAT GLOBAL UNIQUE DES FILTRES (source de vérité)
-  // Tout en dérive : KPI, graphiques, tableau, compteur, chips.
-  // Chaque graphique reçoit ses données via applyFilters(..., exclude)
-  // pour ne pas filtrer sa propre dimension (filtres combinables).
-  // ==========================================================
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [activeSection, setActiveSection] = useState("overview");
   const [notifOpen, setNotifOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
 
-  // Listes des filtres déroulants (à partir des données)
   const visibleIssues = data.issues;
 
   const modules = useMemo(
@@ -90,11 +47,7 @@ export default function Dashboard({
     return [...vals].sort();
   }, [visibleIssues]);
 
-  // Tickets retenus par la combinaison de filtres active
   const filtered = useMemo(() => applyFilters(visibleIssues, filters), [visibleIssues, filters]);
-
-  // Données par graphique : chaque dimension est exclue de son propre
-  // filtre → les autres catégories restent visibles et cliquables
   const charts = useMemo(
     () => ({
       status: applyFilters(visibleIssues, filters, "status"),
@@ -109,30 +62,74 @@ export default function Dashboard({
   const chips = filterChips(filters);
   const filtersActive = chips.length > 0;
 
-  // Zone notifications : synchronisation Gmail + tickets critiques / à haut risque
+  const sections = useMemo(
+    () => [
+      { id: "overview", label: t(locale, "overview"), icon: LayoutDashboard },
+      { id: "tracking", label: t(locale, "ticketTracking"), icon: Table2 },
+      { id: "analysis", label: locale === "fr" ? "Analyse" : "Analysis", icon: BarChart3 },
+    ],
+    [locale]
+  );
+
+  const navItems = useMemo<SidebarItem[]>(() => {
+    const nav: Record<string, SidebarItem[]> = {
+      admin: [
+        { id: "overview", label: t(locale, "overview"), href: "/", icon: LayoutDashboard, group: t(locale, "general") },
+        { id: "tracking", label: t(locale, "allTickets"), href: "/admin/tickets", icon: Table2, group: t(locale, "general") },
+        { id: "analysis", label: t(locale, "reportsAnalysis"), href: "/admin/reports", icon: BarChart3, group: t(locale, "general") },
+        { id: "admin", label: t(locale, "collaborators"), href: "/admin", icon: Users, group: t(locale, "management") },
+        { id: "emails", label: t(locale, "reportsNotifications"), href: "/emails", icon: Bell, group: t(locale, "management") },
+      ],
+      manager: [
+        { id: "overview", label: t(locale, "supervision"), href: "/", icon: LayoutDashboard, group: t(locale, "supervision") },
+        { id: "tracking", label: t(locale, "ticketTracking"), href: "/manager/tickets", icon: Table2, group: t(locale, "supervision") },
+        { id: "analysis", label: t(locale, "interventionReports"), href: "/manager/interventions", icon: BarChart3, group: t(locale, "supervision") },
+        { id: "agents", label: t(locale, "agentTracking"), href: "/manager/agents", icon: Users, group: t(locale, "supervision") },
+        { id: "assignation", label: t(locale, "ticketAssignment"), href: "/manager/assignation", icon: Table2, group: t(locale, "supervision") },
+        { id: "paiements", label: t(locale, "agentPayments"), href: "/manager/paiements", icon: BarChart3, group: t(locale, "supervision") },
+        { id: "retards", label: t(locale, "delaysAlerts"), href: "/manager/retards", icon: AlertTriangle, group: t(locale, "supervision") },
+      ],
+      agent: [
+        { id: "overview", label: t(locale, "myDashboard"), href: "/", icon: LayoutDashboard, group: t(locale, "mySpace") },
+        { id: "tracking", label: t(locale, "myTickets"), href: "/agent/mes-tickets", icon: Table2, group: t(locale, "mySpace") },
+        { id: "analysis", label: t(locale, "myInterventions"), href: "/agent/interventions", icon: BarChart3, group: t(locale, "mySpace") },
+      ],
+    };
+    return nav[user.role] ?? nav.admin;
+  }, [locale, user.role]);
+
   const notifications = useMemo(() => {
     const list: { id: string; title: string; body: string; href: string }[] = [];
     if (syncNote) {
-      list.push({ id: "sync", title: "Synchronisation Gmail", body: `Dernière synchronisation : ${syncNote.outcome} — ${syncNote.detail}`, href: "/emails" });
+      const body =
+        syncNote.outcome === "not_configured"
+          ? t(locale, "gmailNotConfigured")
+          : `${t(locale, "lastSync")} : ${syncNote.outcome} — ${syncNote.detail}`;
+      list.push({ id: "sync", title: t(locale, "gmail"), body, href: "/emails" });
     }
     const criticalOpen = filtered.filter((i) => isOpen(i) && (i.priority === "Critical" || i.priority === "High")).length;
     if (criticalOpen > 0) {
-      list.push({ id: "critical", title: "Tickets critiques / à haut risque", body: `${criticalOpen} ticket(s) Critical/High encore ouverts avec les filtres actifs.`, href: "#tracking" });
+      list.push({
+        id: "critical",
+        title: locale === "fr" ? "Tickets critiques / à haut risque" : "Critical / high-risk tickets",
+        body:
+          locale === "fr"
+            ? `${criticalOpen} ticket(s) Critical/High encore ouverts avec les filtres actifs.`
+            : `${criticalOpen} Critical/High ticket(s) still open with active filters.`,
+        href: "#tracking",
+      });
     }
     return list;
-  }, [syncNote, filtered]);
+  }, [syncNote, filtered, locale]);
 
-  // Clic sur un élément d'un graphique / d'une légende = bascule du filtre
   function toggleFilter(dim: DimKey, value: string) {
     setFilters((f) => ({ ...f, [dim]: f[dim] === value ? "" : value }));
   }
 
-  // Clic sur une barre du graphique temporel = filtre de période sur le mois
   function toggleMonth(from: string, to: string) {
     setFilters((f) => (f.from === from && f.to === to ? { ...f, from: "", to: "" } : { ...f, from, to }));
   }
 
-  // Suppression d'une sélection active (chip)
   function removeChip(key: string) {
     if (key === "period") setFilters((f) => ({ ...f, from: "", to: "" }));
     else setFilters((f) => ({ ...f, [key]: "" }));
@@ -142,7 +139,6 @@ export default function Dashboard({
     setFilters(EMPTY_FILTERS);
   }
 
-  // Mise en évidence de la section visible (scrollspy)
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -152,65 +148,62 @@ export default function Dashboard({
       },
       { rootMargin: "-30% 0px -60% 0px" }
     );
-    SECTIONS.forEach((s) => {
+    sections.forEach((s) => {
       const el = document.getElementById(s.id);
       if (el) observer.observe(el);
     });
     return () => observer.disconnect();
-  }, []);
+  }, [sections]);
 
-  const navItems = NAV[user.role] ?? NAV.admin;
-  const Home = user.role === "admin" ? AdminHome : user.role === "manager" ? ManagerHome : user.role === "agent" ? AgentHome : ViewerHome;
+  const Home = user.role === "admin" ? AdminHome : user.role === "manager" ? ManagerHome : AgentHome;
+
   function handleNavSelect(id: string) {
     if (id.startsWith("/")) {
-      window.location.href = id;
+      router.push(id);
       return;
     }
     setActiveSection(id);
   }
 
   function handleLogout() {
-    fetch("/api/auth/logout", { method: "POST" }).then(() => {
-      window.location.href = "/login";
+    void fetch("/api/auth/logout", { method: "POST" }).finally(() => {
+      router.push("/login");
+      router.refresh();
     });
   }
 
   const selectClass =
     "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none";
-  const inputClass =
-    "rounded-md border border-zinc-300 bg-white px-2 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none";
+  const fromLabel = data.period.from.split("-").reverse().join("/");
+  const toLabel = data.period.to.split("-").reverse().join("/");
 
   return (
     <div>
-      {/* Grande bannière d'images défilantes (refonte design) */}
       <Banner />
 
-      {/* Bande d'information Gmail / dernière synchronisation (Task 5) */}
       {canAccessGmail && syncNote && (
         <div className="border-b border-zinc-200 bg-zinc-50">
           <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-2 px-4 py-2 text-xs text-zinc-600">
             <span className="font-medium text-zinc-700">Gmail :</span>
             <span data-sync-banner>
-              {syncNote.outcome === "not_configured" ? "Dernière synchronisation : Gmail non configuré." : `Dernière synchronisation : ${syncNote.outcome} — ${syncNote.detail}`}
+              {syncNote.outcome === "not_configured"
+                ? t(locale, "gmailNotConfigured")
+                : `${t(locale, "lastSync")} : ${syncNote.outcome} — ${syncNote.detail}`}
             </span>
             <Link href="/emails" className="font-medium text-blue-700 underline">
-              Gmail
+              {t(locale, "gmail")}
             </Link>
           </div>
         </div>
       )}
 
-      {/* ============ EN-TÊTE : titre, période, mise à jour ============ */}
       <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto max-w-[1500px] px-4 py-3">
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <div>
-              <h1 className="text-base font-bold text-zinc-900">
-                IBN GROUP SARL — Suivi des incidents SAP
-              </h1>
+        <div className="mx-auto max-w-[1500px] px-6 py-4 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-center">
+            <div className="w-full">
+              <h1 className="text-base font-bold text-zinc-900">{t(locale, "dashboardTitle")}</h1>
               <p className="mt-0.5 text-xs text-zinc-500">
-                Période des données : du {data.period.from.split("-").reverse().join("/")} au{" "}
-                {data.period.to.split("-").reverse().join("/")} · Dernière actualisation : {data.lastUpdate}
+                {t(locale, "period", { from: fromLabel, to: toLabel, lastUpdate: data.lastUpdate })}
               </p>
             </div>
             <form
@@ -223,32 +216,32 @@ export default function Dashboard({
               <input
                 type="search"
                 name="q"
-                placeholder="Rechercher un incident…"
+                placeholder={t(locale, "searchPlaceholder")}
                 className="w-56 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none"
               />
-              <button
-                type="submit"
-                className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Rechercher
+              <button type="submit" className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                {t(locale, "search")}
               </button>
             </form>
             <div className="flex flex-wrap items-center justify-end gap-3">
               <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-                {filtered.length} / {visibleIssues.length} tickets
+                {t(locale, "ticketsCount", { filtered: filtered.length, total: visibleIssues.length })}
               </span>
-              {canCreateTickets && <Link
-                href="/tickets/nouveau"
-                className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-              >
-                <PlusCircle size={15} /> Nouveau ticket
-              </Link>}
-              {canAccessGmail && <Link href="/emails" className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">Gmail</Link>}
+              {canCreateTickets && (
+                <Link href="/tickets/nouveau" className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                  <PlusCircle size={15} /> {t(locale, "newTicket")}
+                </Link>
+              )}
+              {canAccessGmail && (
+                <Link href="/emails" className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
+                  {t(locale, "gmail")}
+                </Link>
+              )}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setNotifOpen((v) => !v)}
-                  aria-label="Notifications"
+                  aria-label={t(locale, "notifications")}
                   className="relative rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-700 hover:bg-zinc-50"
                 >
                   <Bell size={16} />
@@ -260,18 +253,13 @@ export default function Dashboard({
                 </button>
                 {notifOpen && (
                   <div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-zinc-200 bg-white shadow-lg">
-                    <div className="border-b border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-900">Notifications</div>
+                    <div className="border-b border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-900">{t(locale, "notifications")}</div>
                     <div className="max-h-72 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <p className="px-3 py-4 text-sm text-zinc-400">Aucune notification.</p>
+                        <p className="px-3 py-4 text-sm text-zinc-400">{t(locale, "noNotifications")}</p>
                       ) : (
                         notifications.map((n) => (
-                          <a
-                            key={n.id}
-                            href={n.href}
-                            onClick={() => setNotifOpen(false)}
-                            className="block border-b border-zinc-100 px-3 py-3 hover:bg-zinc-50"
-                          >
+                          <a key={n.id} href={n.href} onClick={() => setNotifOpen(false)} className="block border-b border-zinc-100 px-3 py-3 hover:bg-zinc-50">
                             <p className="text-sm font-medium text-zinc-900">{n.title}</p>
                             <p className="mt-0.5 text-xs text-zinc-500">{n.body}</p>
                           </a>
@@ -281,55 +269,58 @@ export default function Dashboard({
                   </div>
                 )}
               </div>
-              {user.role === "admin" && <Link href="/admin" className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"><Users size={15} /> Utilisateurs</Link>}
+              {user.role === "admin" && (
+                <Link href="/admin" className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
+                  <Users size={15} /> {t(locale, "users")}
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={() => setNavOpen(true)}
-                aria-label="Ouvrir le menu de navigation"
+                aria-label={t(locale, "openMenu")}
                 className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-700 hover:bg-zinc-50 lg:hidden"
               >
                 <Menu size={16} />
               </button>
-              <SessionControls user={user} />
+              <SessionControls user={user} locale={locale} />
             </div>
           </div>
 
-          {/* Filtres globaux combinables (statut, priorité, module, paiement, période) */}
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
             <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-600">
-              <Filter size={15} /> Filtres
+              <Filter size={15} /> {t(locale, "filters")}
             </span>
             <select
-              aria-label="Filtrer par priorité"
+              aria-label={locale === "fr" ? "Filtrer par priorité" : "Filter by priority"}
               value={filters.priority}
               onChange={(e) => setFilters((f) => ({ ...f, priority: e.target.value }))}
               className={selectClass}
             >
-              <option value="">Toutes les priorités</option>
+              <option value="">{t(locale, "allPriorities")}</option>
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
             <select
-              aria-label="Filtrer par module"
+              aria-label={locale === "fr" ? "Filtrer par module" : "Filter by module"}
               value={filters.module}
               onChange={(e) => setFilters((f) => ({ ...f, module: e.target.value }))}
               className={selectClass}
             >
-              <option value="">Tous les modules SAP</option>
-              <option value={NO_VALUE}>{NO_VALUE}</option>
+              <option value="">{t(locale, "allModules")}</option>
+              <option value={NO_VALUE}>{t(locale, "notSpecified")}</option>
               {modules.map((m) => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
             <select
-              aria-label="Filtrer par paiement"
+              aria-label={locale === "fr" ? "Filtrer par paiement" : "Filter by payment"}
               value={filters.payment}
               onChange={(e) => setFilters((f) => ({ ...f, payment: e.target.value }))}
               className={selectClass}
             >
-              <option value="">Tous les paiements</option>
-              <option value={NO_VALUE_DISPLAY}>{NO_VALUE_DISPLAY}</option>
+              <option value="">{t(locale, "allPayments")}</option>
+              <option value={NO_VALUE_DISPLAY}>{t(locale, "notSpecified")}</option>
               {payments.map((p) => (
                 <option key={p} value={p}>{p}</option>
               ))}
@@ -339,14 +330,13 @@ export default function Dashboard({
               disabled={!filtersActive}
               className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <RotateCcw size={14} /> Réinitialiser les filtres
+              <RotateCcw size={14} /> {t(locale, "resetFilters")}
             </button>
           </div>
 
-          {/* Sélections actives, clairement visibles et supprimables */}
           {chips.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-zinc-500">Sélection active :</span>
+              <span className="text-xs text-zinc-500">{t(locale, "activeSelection")}</span>
               {chips.map((c) => (
                 <button
                   key={c.key}
@@ -362,26 +352,20 @@ export default function Dashboard({
         </div>
       </header>
 
-      {/* Message clair si aucun ticket ne correspond aux filtres */}
       {filtered.length === 0 && (
         <div className="border-b border-amber-200 bg-amber-50">
           <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-3 text-sm text-amber-800">
             <AlertTriangle size={16} className="shrink-0" />
-            <span className="font-medium">Aucun ticket ne correspond à la combinaison de filtres actuelle.</span>
-            <span className="text-amber-700">Retirez un critère ci-dessus ou réinitialisez les filtres.</span>
-            <button
-              onClick={resetFilters}
-              className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
-            >
-              Réinitialiser les filtres
+            <span className="font-medium">{t(locale, "noTicketsMatch")}</span>
+            <span className="text-amber-700">{t(locale, "removeCriteria")}</span>
+            <button onClick={resetFilters} className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">
+              {t(locale, "resetFilters")}
             </button>
           </div>
         </div>
       )}
 
-
       <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 lg:pl-52">
-        {/* ============ BARRE LATÉRALE (navigation par rôle) ============ */}
         <Sidebar
           items={navItems}
           active={activeSection}
@@ -390,9 +374,9 @@ export default function Dashboard({
           onLogout={handleLogout}
           open={navOpen}
           onOpenChange={setNavOpen}
+          locale={locale}
         />
 
-        {/* ============ CONTENU ============ */}
         <main className="min-w-0 flex-1 space-y-16">
           <section id="overview" className="scroll-mt-4">
             <Home
@@ -426,11 +410,8 @@ export default function Dashboard({
         </main>
       </div>
 
-      {/* Pied de page */}
       <footer className="border-t border-zinc-200 bg-white py-3">
-        <p className="text-center text-xs text-zinc-400">
-          IBN GROUP SARL · Application de suivi des incidents SAP · © 2026
-        </p>
+        <p className="text-center text-xs text-zinc-400">{t(locale, "footer")}</p>
       </footer>
     </div>
   );

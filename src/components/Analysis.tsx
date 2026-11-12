@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import type { Issue, IssueData, Filters, DimKey } from "@/lib/issues";
 import { isOpen, ageDays, resolutionDays, countBy, PRIORITIES } from "@/lib/issues";
-import { Panel, ChartBox, CountBars, HorizontalBars, StatusPie, TimelineBars, PAYMENT_COLORS, PRIORITY_COLORS } from "./Charts";
+import { Panel, ChartBox, CountBars, HorizontalBars, StatusPie, PAYMENT_COLORS, PRIORITY_COLORS } from "./Charts";
 import SectionHeader from "./SectionHeader";
 
 // Distribution des délais de résolution (en jours)
@@ -34,7 +34,6 @@ export default function Analysis({
 }) {
   const isManager = role === "manager";
   const isAgent = role === "agent";
-  const isViewer = role === "viewer";
   const open = useMemo(() => issues.filter(isOpen), [issues]);
   const closed = useMemo(() => issues.filter((i) => !isOpen(i)), [issues]);
 
@@ -112,32 +111,6 @@ export default function Analysis({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [issues]);
 
-  const viewerMonthly = useMemo(() => {
-    const m = new Map<string, { month: string; ouverts: number; clotures: number; from: string; to: string }>();
-    const key = (iso: string) => iso.slice(0, 7);
-    const lastDay = (m0: string) => {
-      const [y, mo] = m0.split("-").map(Number);
-      const d = new Date(y, mo, 0).getDate();
-      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    };
-    for (const i of issues) {
-      if (i.openDate) {
-        const k = key(i.openDate);
-        const cur = m.get(k) ?? { month: k, ouverts: 0, clotures: 0, from: `${k}-01`, to: lastDay(k) };
-        cur.ouverts += 1;
-        m.set(k, cur);
-      }
-      if (i.closeDate) {
-        const k = key(i.closeDate);
-        const cur = m.get(k) ?? { month: k, ouverts: 0, clotures: 0, from: `${k}-01`, to: lastDay(k) };
-        cur.clotures += 1;
-        m.set(k, cur);
-      }
-    }
-    return [...m.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, v]) => v);
-  }, [issues]);
 
   // Paiement (NE PAS confondre avec le statut de résolution)
   const paymentData = useMemo(() => {
@@ -373,19 +346,8 @@ export default function Analysis({
           <Panel title="Mes tickets par statut">
             <StatusPie data={agentByStatus} />
           </Panel>
-          <Panel title="Mes interventions réalisées par période">
+          <Panel title="Mes interventions rÃ©alisÃ©es par pÃ©riode">
             <CountBars data={agentMonthlyClosed} color="#2563eb" />
-          </Panel>
-        </div>
-      ) : null}
-
-      {isViewer ? (
-        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Panel title="Évolution globale des incidents (ouverts vs clôturés)">
-            <TimelineBars data={viewerMonthly} />
-          </Panel>
-          <Panel title="Comparaison des statuts">
-            <StatusPie data={agentByStatus} />
           </Panel>
         </div>
       ) : null}

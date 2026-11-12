@@ -1,10 +1,10 @@
 // ============================================================
 // src/lib/auth.ts — Authentification RBAC (sans dépendance externe)
-// - Hash mot de passe : scrypt (Node.js natif, résistant force-brute)
+// - Hash mot de passe : bcryptjs (nouveau) + compat scrypt legacy
 // - Session : cookie httpOnly "ibn_session" contenant un JWT HS256
 // - Clé : SESSION_SECRET dans .env.local (jamais committé)
 // ============================================================
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt, timingSafeEqual } from "crypto";
 import bcrypt from "bcryptjs";
 import { promisify } from "util";
 import { cookies } from "next/headers";
@@ -196,36 +196,23 @@ export async function deleteSession(): Promise<void> {
 }
 
 // ============================================================
-// AUTORISATIONS PAR RÔLE
+// AUTORISATIONS PAR RÔLE (helpers globaux; accès contextualisé dans src/lib/access.ts)
 // ============================================================
 
-/**
- * Retourne true si le rôle peut créer ou modifier des tickets.
- * VIEWER et non-connecté : false.
- */
 export function canWrite(role: Role | undefined): boolean {
-  return role === "admin" || role === "agent";
+  return role === "admin" || role === "manager";
 }
 
-/**
- * Retourne true si le rôle peut supprimer des tickets ou gérer les utilisateurs.
- * Seul ADMIN peut faire cela.
- */
 export function canAdmin(role: Role | undefined): boolean {
   return role === "admin";
 }
 
-/**
- * Retourne true si le rôle peut gérer les tickets (ADMIN ou MANAGER).
- */
 export function canManage(role: Role | undefined): boolean {
   return role === "admin" || role === "manager";
 }
 
-// Libellés affichables pour chaque rôle
-export const ROLE_LABELS: Record<string, string> = {
+export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrateur",
   agent: "Agent",
-  viewer: "Observateur",
   manager: "Manager",
 };
