@@ -20,7 +20,7 @@ export async function GET() {
       active: users.active,
     })
     .from(users)
-    .where(eq(users.role, "agent"))
+    .where(eq(users.role, "consultant"))
     .orderBy(users.name);
   return Response.json({ agents: list });
 }

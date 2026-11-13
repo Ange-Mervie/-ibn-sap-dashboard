@@ -77,7 +77,7 @@ export default function ManagerHome(props: HomeProps) {
         <KpiCard label="Tickets à affecter" value={toAssign.length} sub="Ouverts sans assignation" icon={<Layers size={15} />} color="text-orange-600" />
         <KpiCard label="Critiques / à haut risque" value={critical.length} sub="Ouverts avec priorité élevée" icon={<AlertTriangle size={15} />} color="text-red-600" />
         <KpiCard label="En retard" value={overdue.length} sub={`Ouverts de plus de ${OVERDUE_AFTER_DAYS} jours`} icon={<Hourglass size={15} />} color="text-amber-600" />
-        <KpiCard label="Charge max. (agent)" value={topWorkload} sub="Tickets ouverts en cours" icon={<Users size={15} />} color="text-blue-600" />
+        <KpiCard label="Charge max. (consultant)" value={topWorkload} sub="Tickets ouverts en cours" icon={<Users size={15} />} color="text-blue-600" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -95,7 +95,7 @@ export default function ManagerHome(props: HomeProps) {
             {toAssign.length === 0 && <p className="py-6 text-center text-sm text-zinc-400">Aucun ticket à affecter.</p>}
           </ul>
         </Panel>
-        <Panel title="Charge de travail par agent">
+        <Panel title="Charge de travail par consultant">
           <ul className="space-y-2">
             {workload.map((w) => (
               <li key={w.name} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2 text-sm">
@@ -103,7 +103,7 @@ export default function ManagerHome(props: HomeProps) {
                 <span className="text-zinc-600">{w.count} ticket(s) ouvert(s)</span>
               </li>
             ))}
-            {workload.length === 0 && <p className="py-6 text-center text-sm text-zinc-400">Aucun agent avec des tickets.</p>}
+            {workload.length === 0 && <p className="py-6 text-center text-sm text-zinc-400">Aucun consultant avec des tickets.</p>}
           </ul>
         </Panel>
       </div>
@@ -196,7 +196,7 @@ function AgentPerformance({ issues }: { issues: Issue[] }) {
   }, [issues]);
 
   if (rows.length === 0) {
-    return <p className="py-6 text-center text-sm text-zinc-400">Aucune donnée d&apos;activité par agent.</p>;
+    return <p className="py-6 text-center text-sm text-zinc-400">Aucune donnée d&apos;activité par consultant.</p>;
   }
 
   return (

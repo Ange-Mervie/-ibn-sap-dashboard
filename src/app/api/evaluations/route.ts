@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
   if (!ticketId) return jsonError(400, "Le ticket est requis.");
   if (!Number.isInteger(reportId) || reportId <= 0) return jsonError(400, "Le compte rendu est requis.");
-  if (!agentId) return jsonError(400, "L'agent est requis.");
+  if (!agentId) return jsonError(400, "Le consultant est requis.");
   if (!Number.isInteger(quality) || quality < 1 || quality > 5) return jsonError(400, "La qualité doit être un entier de 1 à 5.");
   if (!Number.isInteger(solutionRelevance) || solutionRelevance < 1 || solutionRelevance > 5) return jsonError(400, "La pertinence doit être un entier de 1 à 5.");
   if (!Number.isInteger(autonomy) || autonomy < 1 || autonomy > 5) return jsonError(400, "L'autonomie doit être un entier de 1 à 5.");

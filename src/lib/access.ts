@@ -29,11 +29,11 @@ export function canReadReports(
   email: string
 ): boolean {
   if (role === "admin" || role === "manager") return true;
-  return role === "agent" && sameIdentity(owner, email);
+  return role === "consultant" && sameIdentity(owner, email);
 }
 
 export function canReadEvaluations(role: WorkspaceRole, owner: string, email: string): boolean {
-  return role === "admin" || role === "manager" || (role === "agent" && sameIdentity(owner, email));
+  return role === "admin" || role === "manager" || (role === "consultant" && sameIdentity(owner, email));
 }
 
 export function canReadPayments(role: WorkspaceRole): boolean {
@@ -41,17 +41,17 @@ export function canReadPayments(role: WorkspaceRole): boolean {
 }
 
 export function canWriteTickets(role: WorkspaceRole, assignee: string, email: string): boolean {
-  return role === "admin" || role === "manager" || (role === "agent" && sameIdentity(assignee, email));
+  return role === "admin" || role === "manager" || (role === "consultant" && sameIdentity(assignee, email));
 }
 
 export function canWriteComments(role: WorkspaceRole, assignee: string, email: string): boolean {
-  return role === "admin" || role === "manager" || (role === "agent" && sameIdentity(assignee, email));
+  return role === "admin" || role === "manager" || (role === "consultant" && sameIdentity(assignee, email));
 }
 
 export function canReadTicket(role: WorkspaceRole, assignee: string, email: string): boolean {
-  return role !== "agent" || sameIdentity(assignee, email);
+  return role !== "consultant" || sameIdentity(assignee, email);
 }
 
 export function canCreateReports(role: WorkspaceRole, assignee: string, email: string): boolean {
-  return role === "admin" || (role === "agent" && sameIdentity(assignee, email));
+  return role === "admin" || (role === "consultant" && sameIdentity(assignee, email));
 }

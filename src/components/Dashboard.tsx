@@ -1,418 +1,407 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Table2, BarChart3, RotateCcw, Filter, X, AlertTriangle, PlusCircle, Users, Bell, Menu } from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  CalendarClock,
+  ChartNoAxesCombined,
+  ClipboardList,
+  FolderKanban,
+  LayoutDashboard,
+  Mail,
+  Menu,
+  PlusCircle,
+  ReceiptText,
+  RotateCcw,
+  SlidersHorizontal,
+  UserCog,
+  Users,
+  Wallet,
+  X,
+} from "lucide-react";
 import type { IssueData, DimKey, Filters } from "@/lib/issues";
-import { PRIORITIES, EMPTY_FILTERS, applyFilters, filterChips, NO_VALUE, NO_VALUE_DISPLAY, isOpen } from "@/lib/issues";
+import { applyFilters, filterChips, isOpen, EMPTY_FILTERS, NO_VALUE, NO_VALUE_DISPLAY } from "@/lib/issues";
 import { t, type Locale } from "@/lib/i18n";
-import IssueTable from "./IssueTable";
-import Analysis from "./Analysis";
-import SessionControls from "./SessionControls";
 import Banner from "./Banner";
-import Sidebar from "./Sidebar";
+import SessionControls from "./SessionControls";
+import Sidebar, { type NavItem } from "./Sidebar";
 import AdminHome from "./AdminHome";
 import ManagerHome from "./ManagerHome";
-import AgentHome from "./AgentHome";
-import type { SidebarItem } from "./Sidebar";
+import ConsultantHome from "./ConsultantHome";
+import IssueTable from "./IssueTable";
+import Analysis from "./Analysis";
+
+const ALL_MODULES = "Tous les modules";
+const ALL_PAYMENTS = "Tous les statuts de paiement";
+
+type SessionUser = { name: string; email: string; role: string };
 
 export default function Dashboard({
   data,
-  syncNote,
   user,
   locale = "fr",
 }: {
   data: IssueData;
+  user: SessionUser;
   syncNote?: { outcome: string; detail: string } | null;
-  user: { name: string; email: string; role: string };
   locale?: Locale;
 }) {
   const router = useRouter();
-  const canCreateTickets = user.role === "admin" || user.role === "manager";
-  const canAccessGmail = user.role === "admin";
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [activeSection, setActiveSection] = useState("overview");
-  const [notifOpen, setNotifOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("overview");
+
+  const Home = user.role === "admin" ? AdminHome : user.role === "manager" ? ManagerHome : ConsultantHome;
 
   const visibleIssues = data.issues;
 
-  const modules = useMemo(
-    () => [...new Set(visibleIssues.map((i) => i.module).filter(Boolean))].sort(),
-    [visibleIssues]
-  );
-  const payments = useMemo(() => {
-    const vals = new Set(visibleIssues.map((i) => i.payment).filter(Boolean));
-    return [...vals].sort();
-  }, [visibleIssues]);
-
   const filtered = useMemo(() => applyFilters(visibleIssues, filters), [visibleIssues, filters]);
+  const filtersActive = Boolean(filters.status || filters.priority || filters.module || filters.payment || filters.from || filters.to);
+
   const charts = useMemo(
     () => ({
-      status: applyFilters(visibleIssues, filters, "status"),
-      priority: applyFilters(visibleIssues, filters, "priority"),
-      module: applyFilters(visibleIssues, filters, "module"),
-      payment: applyFilters(visibleIssues, filters, "payment"),
-      period: applyFilters(visibleIssues, filters, "period"),
+      status: visibleIssues,
+      priority: visibleIssues,
+      module: visibleIssues,
+      payment: visibleIssues,
+      period: visibleIssues,
     }),
-    [visibleIssues, filters]
+    [visibleIssues]
+  );
+
+  const modules = useMemo(
+    () => [...new Set(visibleIssues.map((i) => i.module).filter((m) => m && m.toUpperCase() !== "BLANK"))].sort(),
+    [visibleIssues]
+  );
+  const payments = useMemo(
+    () => [...new Set(visibleIssues.map((i) => i.payment).filter((p) => p && p.toUpperCase() !== "BLANK"))].sort(),
+    [visibleIssues]
   );
 
   const chips = filterChips(filters);
-  const filtersActive = chips.length > 0;
-
-  const sections = useMemo(
-    () => [
-      { id: "overview", label: t(locale, "overview"), icon: LayoutDashboard },
-      { id: "tracking", label: t(locale, "ticketTracking"), icon: Table2 },
-      { id: "analysis", label: locale === "fr" ? "Analyse" : "Analysis", icon: BarChart3 },
-    ],
-    [locale]
-  );
-
-  const navItems = useMemo<SidebarItem[]>(() => {
-    const nav: Record<string, SidebarItem[]> = {
-      admin: [
-        { id: "overview", label: t(locale, "overview"), href: "/", icon: LayoutDashboard, group: t(locale, "general") },
-        { id: "tracking", label: t(locale, "allTickets"), href: "/admin/tickets", icon: Table2, group: t(locale, "general") },
-        { id: "analysis", label: t(locale, "reportsAnalysis"), href: "/admin/reports", icon: BarChart3, group: t(locale, "general") },
-        { id: "admin", label: t(locale, "collaborators"), href: "/admin", icon: Users, group: t(locale, "management") },
-        { id: "emails", label: t(locale, "reportsNotifications"), href: "/emails", icon: Bell, group: t(locale, "management") },
-      ],
-      manager: [
-        { id: "overview", label: t(locale, "supervision"), href: "/", icon: LayoutDashboard, group: t(locale, "supervision") },
-        { id: "tracking", label: t(locale, "ticketTracking"), href: "/manager/tickets", icon: Table2, group: t(locale, "supervision") },
-        { id: "analysis", label: t(locale, "interventionReports"), href: "/manager/interventions", icon: BarChart3, group: t(locale, "supervision") },
-        { id: "agents", label: t(locale, "agentTracking"), href: "/manager/agents", icon: Users, group: t(locale, "supervision") },
-        { id: "assignation", label: t(locale, "ticketAssignment"), href: "/manager/assignation", icon: Table2, group: t(locale, "supervision") },
-        { id: "paiements", label: t(locale, "agentPayments"), href: "/manager/paiements", icon: BarChart3, group: t(locale, "supervision") },
-        { id: "retards", label: t(locale, "delaysAlerts"), href: "/manager/retards", icon: AlertTriangle, group: t(locale, "supervision") },
-      ],
-      agent: [
-        { id: "overview", label: t(locale, "myDashboard"), href: "/", icon: LayoutDashboard, group: t(locale, "mySpace") },
-        { id: "tracking", label: t(locale, "myTickets"), href: "/agent/mes-tickets", icon: Table2, group: t(locale, "mySpace") },
-        { id: "analysis", label: t(locale, "myInterventions"), href: "/agent/interventions", icon: BarChart3, group: t(locale, "mySpace") },
-      ],
-    };
-    return nav[user.role] ?? nav.admin;
-  }, [locale, user.role]);
 
   const notifications = useMemo(() => {
-    const list: { id: string; title: string; body: string; href: string }[] = [];
-    if (syncNote) {
-      const body =
-        syncNote.outcome === "not_configured"
-          ? t(locale, "gmailNotConfigured")
-          : `${t(locale, "lastSync")} : ${syncNote.outcome} — ${syncNote.detail}`;
-      list.push({ id: "sync", title: t(locale, "gmail"), body, href: "/emails" });
-    }
-    const criticalOpen = filtered.filter((i) => isOpen(i) && (i.priority === "Critical" || i.priority === "High")).length;
-    if (criticalOpen > 0) {
-      list.push({
-        id: "critical",
-        title: locale === "fr" ? "Tickets critiques / à haut risque" : "Critical / high-risk tickets",
-        body:
-          locale === "fr"
-            ? `${criticalOpen} ticket(s) Critical/High encore ouverts avec les filtres actifs.`
-            : `${criticalOpen} Critical/High ticket(s) still open with active filters.`,
-        href: "#tracking",
+    if (user.role !== "admin") return [] as { id: string; title: string; body: string; href: string }[];
+    const items: { id: string; title: string; body: string; href: string }[] = [];
+    const critical = visibleIssues.filter((i) => isOpen(i) && i.priority === "Critical");
+    if (critical.length) {
+      items.push({
+        id: "crit",
+        title: `${critical.length} ticket(s) Critical ouvert(s)`,
+        body: "À traiter en priorité.",
+        href: "/?section=tracking",
       });
     }
-    return list;
-  }, [syncNote, filtered, locale]);
+    return items;
+  }, [user.role, visibleIssues]);
+
+  const canCreateTickets = user.role === "admin" || user.role === "manager";
+  const canAccessGmail = user.role === "admin";
+
+  const period = useMemo(() => {
+    const dates = data.issues.map((i) => i.openDate).filter(Boolean).sort();
+    return dates.length ? `${dates[0].slice(0, 10)} → ${dates[dates.length - 1].slice(0, 10)}` : "—";
+  }, [data.issues]);
+
+  const navItems: NavItem[] =
+    user.role === "admin"
+      ? [
+          { id: "overview", label: t(locale, "overview"), href: "/", icon: LayoutDashboard, group: t(locale, "main") },
+          { id: "tracking", label: t(locale, "tracking"), href: "/", icon: ClipboardList, group: t(locale, "main") },
+          { id: "analysis", label: t(locale, "analysis"), href: "/", icon: ChartNoAxesCombined, group: t(locale, "main") },
+          { id: "tickets", label: t(locale, "tickets"), href: "/tickets", icon: FolderKanban, group: t(locale, "management") },
+          { id: "users", label: t(locale, "users"), href: "/admin", icon: Users, group: t(locale, "management") },
+          { id: "reports", label: t(locale, "reports"), href: "/admin/rapports", icon: ReceiptText, group: t(locale, "management") },
+          { id: "payments", label: t(locale, "payments"), href: "/admin/payments", icon: Wallet, group: t(locale, "management") },
+          { id: "assignation", label: t(locale, "assignation"), href: "/manager/assignation", icon: UserCog, group: t(locale, "management") },
+          { id: "emails", label: t(locale, "emails"), href: "/emails", icon: Mail, group: t(locale, "account") },
+        ]
+      : user.role === "manager"
+        ? [
+            { id: "overview", label: t(locale, "overview"), href: "/", icon: LayoutDashboard, group: t(locale, "main") },
+            { id: "tracking", label: t(locale, "tracking"), href: "/", icon: ClipboardList, group: t(locale, "main") },
+            { id: "analysis", label: t(locale, "analysis"), href: "/", icon: ChartNoAxesCombined, group: t(locale, "main") },
+            { id: "agents", label: t(locale, "agentTracking"), href: "/manager/consultants", icon: Users, group: t(locale, "supervision") },
+            { id: "paiements", label: t(locale, "agentPayments"), href: "/manager/paiements", icon: BarChart3, group: t(locale, "supervision") },
+            { id: "retards", label: t(locale, "retards"), href: "/manager/retards", icon: CalendarClock, group: t(locale, "supervision") },
+            { id: "emails", label: t(locale, "emails"), href: "/emails", icon: Mail, group: t(locale, "account") },
+          ]
+        : [
+            { id: "overview", label: t(locale, "myTickets"), href: "/", icon: LayoutDashboard, group: t(locale, "main") },
+            { id: "mes-tickets", label: t(locale, "myTickets"), href: "/consultant/mes-tickets", icon: ClipboardList, group: t(locale, "work") },
+            { id: "echeances", label: t(locale, "myDeadlines"), href: "/consultant/echeances", icon: CalendarClock, group: t(locale, "work") },
+            { id: "historique", label: t(locale, "myHistory"), href: "/consultant/historique", icon: ChartNoAxesCombined, group: t(locale, "work") },
+            { id: "interventions", label: t(locale, "myReports"), href: "/consultant/interventions", icon: ReceiptText, group: t(locale, "work") },
+            { id: "remuneration", label: t(locale, "myPay"), href: "/consultant/remuneration", icon: Wallet, group: t(locale, "work") },
+          ];
 
   function toggleFilter(dim: DimKey, value: string) {
-    setFilters((f) => ({ ...f, [dim]: f[dim] === value ? "" : value }));
+    const key = dim as keyof Filters;
+    setFilters((f) => ({ ...f, [key]: f[key] === value ? "" : value }));
   }
-
   function toggleMonth(from: string, to: string) {
-    setFilters((f) => (f.from === from && f.to === to ? { ...f, from: "", to: "" } : { ...f, from, to }));
+    setFilters((f) =>
+      f.from === from && f.to === to ? { ...f, from: "", to: "" } : { ...f, from, to }
+    );
   }
-
-  function removeChip(key: string) {
-    if (key === "period") setFilters((f) => ({ ...f, from: "", to: "" }));
-    else setFilters((f) => ({ ...f, [key]: "" }));
+  function removeChip(key: keyof Filters) {
+    setFilters((f) => ({ ...f, [key]: "" }));
   }
-
   function resetFilters() {
     setFilters(EMPTY_FILTERS);
   }
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActiveSection(entry.target.id);
-        }
-      },
-      { rootMargin: "-30% 0px -60% 0px" }
-    );
-    sections.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, [sections]);
-
-  const Home = user.role === "admin" ? AdminHome : user.role === "manager" ? ManagerHome : AgentHome;
-
-  function handleNavSelect(id: string) {
-    if (id.startsWith("/")) {
-      router.push(id);
+  function handleNavSelect(id: string, href: string) {
+    if (id === "overview" || id === "tracking" || id === "analysis") {
+      setActiveSection(id);
+      setNavOpen(false);
+      requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }));
       return;
     }
-    setActiveSection(id);
+    router.push(href);
   }
 
-  function handleLogout() {
-    void fetch("/api/auth/logout", { method: "POST" }).finally(() => {
-      router.push("/login");
-      router.refresh();
-    });
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/login");
+    router.refresh();
   }
 
-  const selectClass =
-    "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none";
-  const fromLabel = data.period.from.split("-").reverse().join("/");
-  const toLabel = data.period.to.split("-").reverse().join("/");
+  const roleLabel = t(locale, (`role_${user.role}` as "role_admin"));
 
   return (
-    <div>
-      <Banner />
+    <div className="min-h-screen bg-[var(--ibn-bg)]">
+      <Sidebar
+        items={navItems}
+        active={activeSection}
+        onSelect={handleNavSelect}
+        user={user}
+        onLogout={handleLogout}
+        open={navOpen}
+        onOpenChange={setNavOpen}
+        locale={locale}
+      />
 
-      {canAccessGmail && syncNote && (
-        <div className="border-b border-zinc-200 bg-zinc-50">
-          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-2 px-4 py-2 text-xs text-zinc-600">
-            <span className="font-medium text-zinc-700">Gmail :</span>
-            <span data-sync-banner>
-              {syncNote.outcome === "not_configured"
-                ? t(locale, "gmailNotConfigured")
-                : `${t(locale, "lastSync")} : ${syncNote.outcome} — ${syncNote.detail}`}
-            </span>
-            <Link href="/emails" className="font-medium text-blue-700 underline">
-              {t(locale, "gmail")}
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto max-w-[1500px] px-6 py-4 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-4 text-center">
-            <div className="w-full">
-              <h1 className="text-base font-bold text-zinc-900">{t(locale, "dashboardTitle")}</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">
-                {t(locale, "period", { from: fromLabel, to: toLabel, lastUpdate: data.lastUpdate })}
-              </p>
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleNavSelect("tracking");
-              }}
-              className="flex items-center"
+      <div className="lg:pl-[260px]">
+        <header className="sticky top-0 z-30 border-b border-[var(--ibn-border)] bg-white/85 backdrop-blur-md">
+          <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 lg:px-8">
+            <button
+              type="button"
+              onClick={() => setNavOpen(true)}
+              aria-label={t(locale, "openMenu")}
+              className="ibn-btn ibn-btn-ghost px-2 lg:hidden"
             >
-              <input
-                type="search"
-                name="q"
-                placeholder={t(locale, "searchPlaceholder")}
-                className="w-56 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-600 focus:outline-none"
-              />
-              <button type="submit" className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                {t(locale, "search")}
-              </button>
-            </form>
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-                {t(locale, "ticketsCount", { filtered: filtered.length, total: visibleIssues.length })}
+              <Menu size={18} />
+            </button>
+
+            <div className="min-w-0">
+              <p className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[var(--ibn-text-faint)]">
+                {roleLabel}
+              </p>
+              <h1 className="truncate text-[16px] font-semibold tracking-tight text-[var(--ibn-text-strong)]">
+                {t(locale, "appName")}
+              </h1>
+            </div>
+
+            <div className="ml-auto flex items-center gap-1.5">
+              <span className="ibn-badge mr-1 hidden bg-slate-100 text-slate-600 md:inline-flex">
+                <CalendarClock size={12} /> {period}
               </span>
+
               {canCreateTickets && (
-                <Link href="/tickets/nouveau" className="flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                <Link href="/tickets/nouveau" className="ibn-btn ibn-btn-primary hidden sm:inline-flex">
                   <PlusCircle size={15} /> {t(locale, "newTicket")}
                 </Link>
               )}
               {canAccessGmail && (
-                <Link href="/emails" className="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
-                  {t(locale, "gmail")}
+                <Link href="/emails" className="ibn-btn ibn-btn-ghost hidden md:inline-flex" aria-label={t(locale, "gmail")}>
+                  <Mail size={16} />
                 </Link>
               )}
+
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setNotifOpen((v) => !v)}
                   aria-label={t(locale, "notifications")}
-                  className="relative rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-700 hover:bg-zinc-50"
+                  className="ibn-btn ibn-btn-ghost relative px-2"
                 >
                   <Bell size={16} />
                   {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold text-white">
                       {notifications.length}
                     </span>
                   )}
                 </button>
                 {notifOpen && (
-                  <div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-zinc-200 bg-white shadow-lg">
-                    <div className="border-b border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-900">{t(locale, "notifications")}</div>
-                    <div className="max-h-72 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <p className="px-3 py-4 text-sm text-zinc-400">{t(locale, "noNotifications")}</p>
-                      ) : (
-                        notifications.map((n) => (
-                          <a key={n.id} href={n.href} onClick={() => setNotifOpen(false)} className="block border-b border-zinc-100 px-3 py-3 hover:bg-zinc-50">
-                            <p className="text-sm font-medium text-zinc-900">{n.title}</p>
-                            <p className="mt-0.5 text-xs text-zinc-500">{n.body}</p>
-                          </a>
-                        ))
-                      )}
+                  <>
+                    <button
+                      type="button"
+                      aria-label={t(locale, "closeMenu")}
+                      onClick={() => setNotifOpen(false)}
+                      className="fixed inset-0 z-40 cursor-default"
+                    />
+                    <div className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-[var(--ibn-border)] bg-white shadow-[var(--ibn-shadow-md)]">
+                      <div className="border-b border-[var(--ibn-border)] px-4 py-3 text-[13px] font-semibold text-[var(--ibn-text-strong)]">
+                        {t(locale, "notifications")}
+                      </div>
+                      <div className="max-h-72 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <p className="px-4 py-5 text-[12.5px] text-[var(--ibn-text-faint)]">{t(locale, "noNotifications")}</p>
+                        ) : (
+                          notifications.map((n) => (
+                            <a
+                              key={n.id}
+                              href={n.href}
+                              onClick={() => setNotifOpen(false)}
+                              className="block border-b border-slate-100 px-4 py-3 last:border-0 hover:bg-slate-50"
+                            >
+                              <p className="text-[12.5px] font-medium text-[var(--ibn-text-strong)]">{n.title}</p>
+                              <p className="mt-0.5 text-[11.5px] text-[var(--ibn-text-muted)]">{n.body}</p>
+                            </a>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
-              {user.role === "admin" && (
-                <Link href="/admin" className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
-                  <Users size={15} /> {t(locale, "users")}
-                </Link>
-              )}
-              <button
-                type="button"
-                onClick={() => setNavOpen(true)}
-                aria-label={t(locale, "openMenu")}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-zinc-700 hover:bg-zinc-50 lg:hidden"
-              >
-                <Menu size={16} />
-              </button>
+
               <SessionControls user={user} locale={locale} />
             </div>
           </div>
+        </header>
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-600">
-              <Filter size={15} /> {t(locale, "filters")}
-            </span>
-            <select
-              aria-label={locale === "fr" ? "Filtrer par priorité" : "Filter by priority"}
-              value={filters.priority}
-              onChange={(e) => setFilters((f) => ({ ...f, priority: e.target.value }))}
-              className={selectClass}
-            >
-              <option value="">{t(locale, "allPriorities")}</option>
-              {PRIORITIES.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-            <select
-              aria-label={locale === "fr" ? "Filtrer par module" : "Filter by module"}
-              value={filters.module}
-              onChange={(e) => setFilters((f) => ({ ...f, module: e.target.value }))}
-              className={selectClass}
-            >
-              <option value="">{t(locale, "allModules")}</option>
-              <option value={NO_VALUE}>{t(locale, "notSpecified")}</option>
-              {modules.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <select
-              aria-label={locale === "fr" ? "Filtrer par paiement" : "Filter by payment"}
-              value={filters.payment}
-              onChange={(e) => setFilters((f) => ({ ...f, payment: e.target.value }))}
-              className={selectClass}
-            >
-              <option value="">{t(locale, "allPayments")}</option>
-              <option value={NO_VALUE_DISPLAY}>{t(locale, "notSpecified")}</option>
-              {payments.map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-            <button
-              onClick={resetFilters}
-              disabled={!filtersActive}
-              className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <RotateCcw size={14} /> {t(locale, "resetFilters")}
-            </button>
-          </div>
-
-          {chips.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-zinc-500">{t(locale, "activeSelection")}</span>
-              {chips.map((c) => (
-                <button
-                  key={c.key}
-                  onClick={() => removeChip(c.key)}
-                  className="flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100"
-                >
-                  {c.label}
-                  <X size={12} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </header>
-
-      {filtered.length === 0 && (
-        <div className="border-b border-amber-200 bg-amber-50">
-          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-3 text-sm text-amber-800">
-            <AlertTriangle size={16} className="shrink-0" />
-            <span className="font-medium">{t(locale, "noTicketsMatch")}</span>
-            <span className="text-amber-700">{t(locale, "removeCriteria")}</span>
-            <button onClick={resetFilters} className="rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700">
-              {t(locale, "resetFilters")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 py-6 lg:pl-52">
-        <Sidebar
-          items={navItems}
-          active={activeSection}
-          onSelect={handleNavSelect}
-          user={user}
-          onLogout={handleLogout}
-          open={navOpen}
-          onOpenChange={setNavOpen}
-          locale={locale}
+        <Banner
+          title={t(locale, "overview")}
+          subtitle={
+            user.role === "admin"
+              ? "Supervision complète des incidents SAP : volume, priorités, modules, délais et qualité des données."
+              : user.role === "manager"
+                ? "Pilotage de l'équipe : charge, affectations, retards et qualité des interventions."
+                : "Votre espace de travail : tickets assignés, échéances et interventions."
+          }
+          meta={[
+            { label: t(locale, "dataPeriod"), value: period },
+            { label: t(locale, "tickets"), value: String(visibleIssues.length) },
+            { label: t(locale, "open"), value: String(visibleIssues.filter(isOpen).length) },
+            { label: t(locale, "closed"), value: String(visibleIssues.length - visibleIssues.filter(isOpen).length) },
+          ]}
         />
 
-        <main className="min-w-0 flex-1 space-y-16">
-          <section id="overview" className="scroll-mt-4">
-            <Home
-              data={data}
-              syncNote={syncNote}
-              user={user}
-              issues={filtered}
-              total={visibleIssues.length}
-              charts={charts}
-              filters={filters}
-              onToggle={toggleFilter}
-              onToggleMonth={toggleMonth}
-              onReset={resetFilters}
-            />
+        <main className="mx-auto max-w-[1440px] px-4 pb-14 pt-6 lg:px-8">
+          <section className="ibn-card p-4" aria-label={t(locale, "filters")}>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="mr-1 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--ibn-text-muted)]">
+                <SlidersHorizontal size={14} /> {t(locale, "filters")}
+              </span>
+              <select
+                aria-label={locale === "fr" ? "Filtrer par priorité" : "Filter by priority"}
+                value={filters.priority}
+                onChange={(e) => setFilters((f) => ({ ...f, priority: e.target.value }))}
+                className="ibn-select w-auto min-w-[150px]"
+              >
+                <option value="">{t(locale, "allPriorities")}</option>
+                {(["Critical", "High", "Medium", "Low"] as const).map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              <select
+                aria-label={locale === "fr" ? "Filtrer par module" : "Filter by module"}
+                value={filters.module}
+                onChange={(e) => setFilters((f) => ({ ...f, module: e.target.value }))}
+                className="ibn-select w-auto min-w-[150px]"
+              >
+                <option value="">{ALL_MODULES}</option>
+                <option value={NO_VALUE}>{NO_VALUE_DISPLAY}</option>
+                {modules.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <select
+                aria-label={locale === "fr" ? "Filtrer par paiement" : "Filter by payment"}
+                value={filters.payment}
+                onChange={(e) => setFilters((f) => ({ ...f, payment: e.target.value }))}
+                className="ibn-select w-auto min-w-[150px]"
+              >
+                <option value="">{ALL_PAYMENTS}</option>
+                <option value={NO_VALUE_DISPLAY}>{NO_VALUE_DISPLAY}</option>
+                {payments.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              <button onClick={resetFilters} disabled={!filtersActive} className="ibn-btn ml-auto">
+                <RotateCcw size={14} /> {t(locale, "resetFilters")}
+              </button>
+            </div>
+
+            {chips.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+                <span className="text-[11px] font-medium text-[var(--ibn-text-faint)]">{t(locale, "activeSelection")}</span>
+                {chips.map((c) => (
+                  <button
+                    key={c.key}
+                    onClick={() => removeChip(c.key as keyof Filters)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition hover:bg-blue-100"
+                  >
+                    {c.label}
+                    <X size={11} />
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
 
-          <section id="tracking" className="scroll-mt-4">
-            <IssueTable issues={filtered} onReset={resetFilters} filtersActive={filtersActive} />
-          </section>
+          {filtered.length === 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12.5px] text-amber-800">
+              <span className="font-medium">{t(locale, "noTicketsMatch")}</span>
+              <span className="text-amber-700">{t(locale, "removeCriteria")}</span>
+              <button onClick={resetFilters} className="ibn-btn ml-auto border-amber-300 bg-white text-amber-800 hover:bg-amber-100">
+                {t(locale, "resetFilters")}
+              </button>
+            </div>
+          )}
 
-          <section id="analysis" className="scroll-mt-4">
-            <Analysis
-              issues={filtered}
-              controls={data.controls}
-              charts={charts}
-              filters={filters}
-              onToggle={toggleFilter}
-              role={user.role}
-            />
-          </section>
+          <div className="mt-8 space-y-10">
+            <section id="overview" className="scroll-mt-24">
+              <Home
+                data={data}
+                user={user}
+                issues={filtered}
+                total={visibleIssues.length}
+                charts={charts}
+                filters={filters}
+                onToggle={toggleFilter}
+                onToggleMonth={toggleMonth}
+                onReset={resetFilters}
+              />
+            </section>
+
+            <section id="tracking" className="scroll-mt-24">
+              <IssueTable issues={filtered} onReset={resetFilters} filtersActive={filtersActive} />
+            </section>
+
+            <section id="analysis" className="scroll-mt-24">
+              <Analysis
+                issues={filtered}
+                controls={data.controls}
+                charts={charts}
+                filters={filters}
+                onToggle={toggleFilter}
+                role={user.role}
+              />
+            </section>
+          </div>
+
+          <footer className="mt-14 border-t border-[var(--ibn-border)] pt-5 text-center text-[11px] text-[var(--ibn-text-faint)]">
+            {t(locale, "footer")}
+          </footer>
         </main>
       </div>
-
-      <footer className="border-t border-zinc-200 bg-white py-3">
-        <p className="text-center text-xs text-zinc-400">{t(locale, "footer")}</p>
-      </footer>
     </div>
   );
 }

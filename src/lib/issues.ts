@@ -1,7 +1,7 @@
 // ============================================================
 // Types et utilitaires PURS (utilisés côté client ET serveur)
 // Aucun accès système de fichiers ici → compatible navigateur.
-// Le lecteur Excel est dans loadIssues.ts (côté serveur uniquement).
+// Les données proviennent de MySQL via loadDb.ts (côté serveur uniquement).
 // ============================================================
 
 // Ordre d'affichage des statuts / priorités (normalisés)

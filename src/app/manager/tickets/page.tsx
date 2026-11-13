@@ -18,7 +18,7 @@ export default async function ManagerTicketsPage() {
         <div className="mb-4">
           <h1 className="text-xl font-bold text-zinc-900">Suivi des tickets</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Tous les tickets accessibles au manager — {issues.length} ticket(s).
+            Tous les tickets accessibles au manager , {issues.length} ticket(s).
           </p>
         </div>
         <IssueTable issues={issues} filtersActive={false} />

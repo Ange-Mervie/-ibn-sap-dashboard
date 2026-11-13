@@ -22,7 +22,7 @@ export default async function DemoTicketsPage() {
         </Link>
         <SessionControls user={{ name: session.name, email: session.email, role: session.role }} />
       </div>
-      <h1 className="text-xl font-bold text-zinc-900">Démo — Gestion des tickets SAP</h1>
+      <h1 className="text-xl font-bold text-zinc-900">Démo  Gestion des tickets SAP</h1>
       <p className="mt-1 text-sm text-zinc-500">
         Création de ticket via formulaire → persistance MySQL → vue détail / historique / commentaires.
         L&apos;intégration Gmail reste en mode non configuré pour la démo.

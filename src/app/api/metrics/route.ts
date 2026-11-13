@@ -9,7 +9,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const rows =
-    session.role === "agent"
+    session.role === "consultant"
       ? await db.select().from(tickets).where(eq(tickets.assignee, session.email))
       : await db.select().from(tickets);
 

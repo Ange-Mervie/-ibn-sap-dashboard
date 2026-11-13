@@ -8,6 +8,8 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export const instant = false;
 
+const STRIP = ["/banner/3.jpg", "/banner/5.jpg", "/banner/7.jpg"];
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -20,31 +22,64 @@ export default async function LoginPage({
   const locale = await getLocale();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 px-4">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
-      </div>
+    <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+      <aside className="ibn-hero relative hidden flex-col justify-between overflow-hidden p-10 lg:flex">
+        <Image src="/banner/4.jpg" alt="" fill priority sizes="50vw" className="object-cover opacity-25" />
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-white">
+            <Image src="/IBN Logo.png" alt="IBN Group" width={44} height={44} className="object-contain" priority />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">IBN Group</p>
+            <p className="text-[11px] text-blue-200/60">SAP Incident Tracking</p>
+          </div>
+        </div>
 
-      <div className="relative w-full max-w-md">
-        <div className="mb-4 flex justify-end">
+        <div className="relative z-10 max-w-md">
+          <h1 className="text-balance text-[32px] font-semibold leading-tight tracking-tight text-white">
+            {t(locale, "loginSubtitle")}
+          </h1>
+          <p className="mt-3 text-[13.5px] leading-relaxed text-slate-300">
+            {t(locale, "footer")}
+          </p>
+          <div className="mt-8 flex gap-2">
+            {STRIP.map((src) => (
+              <div key={src} className="relative h-20 w-20 overflow-hidden rounded-lg ring-1 ring-inset ring-white/15">
+                <Image src={src} alt="" fill sizes="80px" className="object-cover" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative z-10 text-[11px] text-blue-200/40">© {new Date().getFullYear()} IBN Group SARL</p>
+      </aside>
+
+      <section className="relative flex items-center justify-center bg-white px-5 py-12 sm:px-10">
+        <div className="absolute right-4 top-4">
           <LanguageSwitcher locale={locale} />
         </div>
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg">
-            <Image src="/IBN Logo.png" alt="IBN Group" width={64} height={64} className="object-contain" />
+
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-[var(--ibn-border)] bg-white">
+              <Image src="/IBN Logo.png" alt="IBN Group" width={40} height={40} className="object-contain" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[var(--ibn-text-strong)]">IBN Group</p>
+              <p className="text-[11px] text-[var(--ibn-text-muted)]">SAP Incident Tracking</p>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">{t(locale, "appName")}</h1>
-          <p className="mt-1 text-sm text-blue-200/70">{t(locale, "loginSubtitle")}</p>
-        </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-md">
-          <h2 className="mb-6 text-center text-lg font-semibold text-white">{t(locale, "loginHeading")}</h2>
+          <h2 className="text-[22px] font-semibold tracking-tight text-[var(--ibn-text-strong)]">
+            {t(locale, "loginHeading")}
+          </h2>
+          <p className="mb-7 mt-1.5 text-[13px] text-[var(--ibn-text-muted)]">{t(locale, "loginSubtitle")}</p>
+
           <LoginForm redirectTo={from ?? "/"} locale={locale} />
-        </div>
 
-        <p className="mt-6 text-center text-xs text-blue-200/40">{t(locale, "loginFooter")}</p>
-      </div>
+          <p className="mt-8 text-center text-[11px] text-[var(--ibn-text-faint)]">{t(locale, "loginFooter")}</p>
+        </div>
+      </section>
     </main>
   );
 }

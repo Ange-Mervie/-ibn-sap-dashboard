@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Download, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Issue } from "@/lib/issues";
 import { isOpen, ageDays, PRIORITIES, issuesToCSV } from "@/lib/issues";
 import SectionHeader from "./SectionHeader";
@@ -16,32 +16,20 @@ export default function IssueTable({
   onReset,
   filtersActive,
 }: {
-  issues: Issue[]; // déjà filtrés par les filtres globaux
+  issues: Issue[];
   onReset?: () => void;
   filtersActive: boolean;
 }) {
-  const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "id", dir: "asc" });
   const [page, setPage] = useState(1);
 
-  // Recherche par numéro ou description
-  const searched = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return issues;
-    return issues.filter(
-      (i) => i.id.toLowerCase().includes(q) || i.description.toLowerCase().includes(q)
-    );
-  }, [issues, search]);
-
-  // Tri
   const sorted = useMemo(() => {
     const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-    const list = [...searched];
+    const list = [...issues];
     const dir = sort.dir === "asc" ? 1 : -1;
     list.sort((a, b) => {
       switch (sort.key) {
         case "id":
-          // Mélange d'ids Excel ("11") et générés ("SAP-2026-0001") : tri naturel
           return a.id.localeCompare(b.id, "fr", { numeric: true }) * dir;
         case "openDate":
           return ((a.openDate || "9999").localeCompare(b.openDate || "9999")) * dir;
@@ -52,9 +40,8 @@ export default function IssueTable({
       }
     });
     return list;
-  }, [searched, sort]);
+  }, [issues, sort]);
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const current = Math.min(page, totalPages);
   const rows = sorted.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
@@ -65,12 +52,11 @@ export default function IssueTable({
   }
 
   function arrow(key: SortKey) {
-    if (sort.key !== key) return " ↕";
+    if (sort.key !== key) return "";
     return sort.dir === "asc" ? " ↑" : " ↓";
   }
 
   function resetAll() {
-    setSearch("");
     setSort({ key: "id", dir: "asc" });
     setPage(1);
     onReset?.();
@@ -87,156 +73,115 @@ export default function IssueTable({
     URL.revokeObjectURL(url);
   }
 
-  const anyActive = Boolean(search || filtersActive);
+  const statusStyle = (s: string) =>
+    s === "Closed"
+      ? "bg-green-50 text-green-700"
+      : s === "Blocked"
+        ? "bg-red-50 text-red-700"
+        : s === "In Progress"
+          ? "bg-blue-50 text-blue-700"
+          : s === "waiting for Customer"
+            ? "bg-amber-50 text-amber-700"
+            : "bg-slate-100 text-slate-600";
+
+  const priorityStyle = (p: string) =>
+    p === "Critical"
+      ? "bg-red-50 text-red-700"
+      : p === "High"
+        ? "bg-orange-50 text-orange-700"
+        : p === "Medium"
+          ? "bg-amber-50 text-amber-700"
+          : "bg-slate-100 text-slate-600";
 
   return (
     <div>
       <SectionHeader
         title="Suivi des incidents"
-        subtitle="Recherche, filtres, tri et export — les colonnes reprennent les champs du fichier source"
-        image="/banner/laptop.jpg"
+        subtitle="Tous les tickets, du plus récent au plus ancien. Cliquez sur un numéro pour ouvrir la fiche."
+        action={
+          <div className="flex items-center gap-2">
+            <span className="ibn-badge bg-slate-100 text-slate-600">{sorted.length} tickets</span>
+            <button onClick={exportCSV} disabled={!sorted.length} className="ibn-btn">
+              <Download size={14} /> Export CSV
+            </button>
+            <button onClick={resetAll} disabled={!filtersActive && sort.key === "id"} className="ibn-btn">
+              <RotateCcw size={14} /> Réinitialiser
+            </button>
+          </div>
+        }
       />
 
-      {/* Barre d'outils */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="N° de ticket ou description..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-72 rounded-lg border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          />
-        </div>
-
-        <button
-          onClick={exportCSV}
-          disabled={!sorted.length}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-slate-50 disabled:opacity-40"
-        >
-          <Download size={14} /> Export CSV
-        </button>
-
-        <button
-          onClick={resetAll}
-          disabled={!anyActive}
-          className="flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <RotateCcw size={14} /> Réinitialiser
-        </button>
-
-        <span className="ml-auto text-sm text-zinc-500">
-          {sorted.length} ticket(s) correspondant(aux)
-        </span>
-      </div>
-
-      {/* Tableau */}
-      <div className="table-scroll overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
-            <tr>
-              <th onClick={() => toggleSort("id")} className="cursor-pointer px-3 py-3 font-semibold hover:text-zinc-900">
-                N°{arrow("id")}
-              </th>
-              <th className="px-3 py-3 font-semibold">Description</th>
-              <th className="px-3 py-3 font-semibold">Statut</th>
-              <th onClick={() => toggleSort("priority")} className="cursor-pointer px-3 py-3 font-semibold hover:text-zinc-900">
-                Priorité{arrow("priority")}
-              </th>
-              <th className="px-3 py-3 font-semibold">Module SAP</th>
-              <th className="px-3 py-3 font-semibold">Demandeur</th>
-              <th className="px-3 py-3 font-semibold">Agent affecté</th>
-              <th onClick={() => toggleSort("openDate")} className="cursor-pointer px-3 py-3 font-semibold hover:text-zinc-900">
-                Open Date{arrow("openDate")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {rows.length === 0 && (
+      <div className="ibn-card overflow-hidden">
+        <div className="table-scroll">
+          <table className="ibn-table w-full">
+            <thead>
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center">
-                  <p className="text-sm font-medium text-zinc-600">Aucun ticket ne correspond aux critères.</p>
-                  <button onClick={resetAll} className="mt-3 text-sm text-blue-600 underline">
-                    Réinitialiser les filtres
-                  </button>
-                </td>
+                <th onClick={() => toggleSort("id")} className="cursor-pointer select-none">N°{arrow("id")}</th>
+                <th>Description</th>
+                <th>Statut</th>
+                <th onClick={() => toggleSort("priority")} className="cursor-pointer select-none">Priorité{arrow("priority")}</th>
+                <th>Module SAP</th>
+                <th>Demandeur</th>
+                <th>Consultant</th>
+                <th onClick={() => toggleSort("openDate")} className="cursor-pointer select-none">Ouvert le{arrow("openDate")}</th>
               </tr>
-            )}
-            {rows.map((i) => {
-              return (
-                <tr key={i.id} className={`hover:bg-slate-50 ${i.priority === "Critical" && isOpen(i) ? "bg-red-50/60" : ""}`}>
-                  <td className="px-3 py-2.5 font-mono text-xs">
-                    <Link href={`/tickets/${encodeURIComponent(i.id)}`} className="text-blue-600 underline-offset-2 hover:underline">
+            </thead>
+            <tbody>
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-14 text-center">
+                    <p className="text-[13px] font-medium text-[var(--ibn-text-muted)]">Aucun ticket ne correspond aux critères.</p>
+                    <button onClick={resetAll} className="mt-2 text-[12.5px] font-medium text-[var(--ibn-blue-600)] hover:underline">
+                      Réinitialiser les filtres
+                    </button>
+                  </td>
+                </tr>
+              )}
+              {rows.map((i) => (
+                <tr key={i.id} className={i.priority === "Critical" && isOpen(i) ? "bg-red-50/40" : undefined}>
+                  <td className="whitespace-nowrap font-mono text-[11.5px]">
+                    <Link href={`/tickets/${encodeURIComponent(i.id)}`} className="font-medium text-[var(--ibn-blue-600)] hover:underline">
                       {i.id}
                     </Link>
                   </td>
-                  <td className="max-w-[260px] truncate px-3 py-2.5" title={i.description}>{i.description}</td>
-                  <td className="px-3 py-2.5">
-                    <span
-                      className="rounded-full px-2 py-0.5 text-xs font-medium"
-                      style={{
-                        backgroundColor: i.status === "Closed" ? "#dcfce7" : i.status === "Blocked" ? "#fee2e2" : i.status === "In Progress" ? "#dbeafe" : "#f4f4f5",
-                        color: i.status === "Closed" ? "#166534" : i.status === "Blocked" ? "#991b1b" : i.status === "In Progress" ? "#1e40af" : "#52525b",
-                      }}
-                    >
-                      {i.status}
-                    </span>
+                  <td className="max-w-[320px] truncate text-[var(--ibn-text-muted)]" title={i.description}>
+                    {i.description}
                   </td>
-                  <td className="px-3 py-2.5">
-                    <span
-                      className="rounded-full px-2 py-0.5 text-xs font-semibold"
-                      style={{
-                        backgroundColor: i.priority === "Critical" ? "#fee2e2" : i.priority === "High" ? "#ffedd5" : i.priority === "Medium" ? "#fef3c7" : "#f4f4f5",
-                        color: i.priority === "Critical" ? "#991b1b" : i.priority === "High" ? "#9a3412" : i.priority === "Medium" ? "#92400e" : "#52525b",
-                      }}
-                    >
-                      {i.priority}
-                    </span>
+                  <td>
+                    <span className={`ibn-badge ${statusStyle(i.status)}`}>{i.status}</span>
                   </td>
-                  <td className="px-3 py-2.5 text-zinc-600">
+                  <td>
+                    <span className={`ibn-badge ${priorityStyle(i.priority)}`}>{i.priority}</span>
+                  </td>
+                  <td className="text-[var(--ibn-text-muted)]">
                     {i.module && i.module.toUpperCase() !== "BLANK" ? i.module : <span className="text-amber-600">Non renseigné</span>}
                   </td>
-                  <td className="px-3 py-2.5 text-zinc-600">{i.raisedBy || "—"}</td>
-                  <td className="px-3 py-2.5 text-zinc-600">{i.assignee || <span className="text-zinc-400">Non affecté</span>}</td>
-                  <td className="px-3 py-2.5 text-zinc-600">{i.openDate || <span className="text-amber-600">Information absente</span>}</td>
+                  <td className="text-[var(--ibn-text-muted)]">{i.raisedBy || "—"}</td>
+                  <td className="text-[var(--ibn-text-muted)]">{i.assignee || <span className="text-[var(--ibn-text-faint)]">Non affecté</span>}</td>
+                  <td className="whitespace-nowrap text-[var(--ibn-text-muted)]">{i.openDate || <span className="text-amber-600">Information absente</span>}</td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Pagination */}
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-zinc-500">
-          Page {current} / {totalPages} · {sorted.length} ticket(s)
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={current <= 1}
-            className="flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50 disabled:opacity-40"
-          >
-            <ChevronLeft size={14} /> Précédent
-          </button>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={current >= totalPages}
-            className="flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-600 shadow-sm hover:bg-zinc-50 disabled:opacity-40"
-          >
-            Suivant <ChevronRight size={14} />
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--ibn-border)] px-4 py-3">
+          <p className="text-[11.5px] text-[var(--ibn-text-muted)]">
+            Page {current} / {totalPages} · {sorted.length} ticket(s)
+          </p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={current <= 1} className="ibn-btn">
+              <ChevronLeft size={14} /> Précédent
+            </button>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={current >= totalPages} className="ibn-btn">
+              Suivant <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Légende */}
-      <p className="mt-3 text-xs text-zinc-400">
-        Priorités : Critical ({PRIORITIES[0]}), High, Medium, Low · Les lignes roses = tickets Critical encore ouverts ·
-        « Information absente » = valeur vide dans le fichier Excel.
+      <p className="mt-3 text-[11px] text-[var(--ibn-text-faint)]">
+        Priorités : {PRIORITIES.join(" · ")} — les lignes « Critical » ouvertes sont surlignées.
       </p>
     </div>
   );

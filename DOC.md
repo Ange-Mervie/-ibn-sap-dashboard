@@ -35,14 +35,12 @@ npx tsx scripts/check-security.ts  # contrôles sécurité (validators, secrets)
 
 ```
 data/
-  IBN-SAP SUPPORT-Issue-Tracking-SCDP UPDATED.xlsx   ← source de vérité (copie du fichier original)
-  taches.xlsx                                        ← ancien fichier, non utilisé par le dashboard
 src/
   app/
-    page.tsx          → point d'entrée (serveur) : charge l'Excel, rend l'application
+    page.tsx          → point d'entrée (serveur) : charge les tickets depuis MySQL, rend l'application
     layout.tsx        → balise HTML globale, titre, métadonnées
     loading.tsx       → état « chargement »
-    error.tsx         → état « erreur » (ex. fichier Excel introuvable)
+    error.tsx         → état « erreur »
     globals.css       → styles globaux + animation de la bande d'images
   components/
     Banner.tsx        → bande d'images défilante (haut de page)
@@ -54,16 +52,14 @@ src/
     Charts.tsx        → graphiques réutilisables (recharts) : couleurs, infobulles, clics et pastilles de catégories
   lib/
     issues.ts         → types, constantes, filtres globaux (Filters, applyFilters) et fonctions PURS (client + serveur)
-    loadIssues.ts     → lecteur Excel (côté serveur uniquement, utilise fs + xlsx)
 scripts/
-  check-data.ts       → affiche les chiffres clés et les contrôles qualité
   e2e-test.mjs        → tests automatisés navigateur (puppeteer-core + Edge)
 public/banner/        → images de la bande défilante et des en-têtes de section
 ```
 
 **Principe de séparation** : `issues.ts` ne contient aucun accès au système de fichiers
-(il est donc importable par les composants React côté navigateur) ; tout le lecture
-d'Excel se fait dans `loadIssues.ts`, exécuté uniquement sur le serveur.
+(il est donc importable par les composants React côté navigateur) ; toute la lecture
+des tickets se fait dans `loadDb.ts` (MySQL), exécuté uniquement sur le serveur.
 
 La page est rendue **à chaque requête** (`export const instant = false` +
 `await connection()`) car l'ancienneté des tickets dépend de la date du jour.
@@ -74,19 +70,13 @@ La page est rendue **à chaque requête** (`export const instant = false` +
 
 | Élément | Valeur |
 |---|---|
-| Fichier | `data/IBN-SAP SUPPORT-Issue-Tracking-SCDP UPDATED.xlsx` |
-| Feuille | `PM Issue Tracking` |
-| En-tête | ligne 14 du classeur |
-| Lignes de données | lignes 15 à 112 → **98 tickets** |
-| Lignes 1 à 10 | en-tête + résumés (totaux) → **exclues des calculs**, utilisées pour vérification |
-| Autres feuilles | `RECOMMENDATIONS`, `Key - Do Not Delete`, `-Disclaimer-` → ignorées |
-| Période réelle | 04/01/2026 au 07/10/2026 (calculée à partir des dates) |
+| Source | Table MySQL `tickets` (base `ibn_dashboard`) |
+| Connexion | `DATABASE_URL` (mysql2 + Drizzle ORM) |
+| Colonnes | `id`, `description`, `status`, `priority`, `module`, `raised_by`, `email`, `open_date`, `close_date`, `assignee`, `payment`, `comments`, `source`, `created_by`, `created_at`, `updated_at` |
+| Période | calculée à partir des dates d'ouverture et de clôture |
 
-Colonnes lues : `Issue No.`, `Issue Description`, `Status`, `Priority`, `SAP module`,
-`Raised By`, `open Date`, `Close Date`, `Payment status`, `Comments`.
-
-Pour mettre à jour les données : remplacer le fichier dans `data/` (même nom, même feuille),
-aucune modification de code nécessaire.
+Les tickets sont créés directement dans l'application par l'administrateur (ou le manager).
+Pour mettre à jour les données : passer par l'interface ou la base MySQL.
 
 ---
 
@@ -197,9 +187,8 @@ Chaque alerte affiche le nombre de tickets concernés et leurs numéros.
    (janvier à octobre 2026) est suffisante pour une lecture mensuelle, mais les volumes
    mensuels faibles limitent l'interprétation statistique.
 6. **Export CSV** : séparateur `;` (compatible Excel francophone), encodage UTF-8 avec BOM.
-7. **Test responsive** : vérifié à 1440 px (desktop) et 820 px (tablette) via captures
-   d'écran automatisées ; non testé sur mobile très étroit (< 400 px).
-8. `data/taches.xlsx` (ancien fichier de tâches) est conservé mais **inutilisé**.
+7. **Test responsive** : vérifié à 390, 768, 1024 et 1440 px (captures et mesures
+   automatisées) ; aucun débordement horizontal.
 
 ---
 

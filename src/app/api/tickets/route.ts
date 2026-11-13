@@ -1,6 +1,6 @@
-﻿// GET : liste des tickets (ADMIN / MANAGER : tous Â· AGENT : les siens)
-// POST : crÃ©ation d'un ticket dans MySQL.
-// NumÃ©ro lisible SAP-YYYY-NNNN gÃ©nÃ©rÃ© via la table ticket_counters (sans collision).
+﻿// GET : liste des tickets (ADMIN / MANAGER : tous · AGENT : les siens)
+// POST : création d'un ticket dans MySQL.
+// Numéro lisible SAP-YYYY-NNNN généré via la table ticket_counters (sans collision).
 import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
@@ -9,17 +9,17 @@ import { jsonError } from "@/lib/db";
 import { getSession, canWrite } from "@/lib/auth";
 import { validateTicketInput } from "@/lib/validate";
 
-// GET /api/tickets â€” liste des tickets accessibles Ã  la session.
+// GET /api/tickets — liste des tickets accessibles à la session.
 export async function GET() {
   const session = await getSession();
-  if (!session) return jsonError(401, "Non authentifiÃ©. Veuillez vous connecter.");
+  if (!session) return jsonError(401, "Non authentifié. Veuillez vous connecter.");
 
   if (session.role === "admin" || session.role === "manager") {
     const rows = await db.select().from(tickets).orderBy(tickets.id);
     return Response.json({ tickets: rows });
   }
 
-  if (session.role === "agent") {
+  if (session.role === "consultant") {
     const rows = await db
       .select()
       .from(tickets)
@@ -28,13 +28,13 @@ export async function GET() {
     return Response.json({ tickets: rows });
   }
 
-  return jsonError(403, "AccÃ¨s refusÃ©. RÃ´le non autorisÃ© Ã  consulter les tickets.");
+  return jsonError(403, "Accès refusé. Rôle non autorisé à consulter les tickets.");
 }
 
 export async function POST(req: Request) {
   const session = await getSession();
-  if (!session) return jsonError(401, "Non authentifiÃ©. Veuillez vous connecter.");
-  if (!canWrite(session.role)) return jsonError(403, "AccÃ¨s refusÃ©. Votre rÃ´le ne permet pas la crÃ©ation de tickets.");
+  if (!session) return jsonError(401, "Non authentifié. Veuillez vous connecter.");
+  if (!canWrite(session.role)) return jsonError(403, "Accès refusé. Votre rôle ne permet pas la création de tickets.");
 
   let body: unknown;
   try {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   }
 
   const { data, errors } = validateTicketInput(body);
-  if (!data) return jsonError(400, "DonnÃ©es invalides.", errors);
+  if (!data) return jsonError(400, "Données invalides.", errors);
 
   const year = new Date().getFullYear();
 
@@ -87,14 +87,14 @@ export async function POST(req: Request) {
       });
 
       const [saved] = await tx.select().from(tickets).where(eq(tickets.id, id));
-      if (!saved) throw new Error("ticket relu introuvable aprÃ¨s insertion");
+      if (!saved) throw new Error("ticket relu introuvable après insertion");
       return saved;
     });
 
     revalidatePath("/");
     return Response.json({ ticket }, { status: 201 });
   } catch (err) {
-    return jsonError(500, `Ã‰chec de la crÃ©ation : ${err instanceof Error ? err.message : "erreur inconnue"}`);
+    return jsonError(500, `Échec de la création : ${err instanceof Error ? err.message : "erreur inconnue"}`);
   }
 }
 

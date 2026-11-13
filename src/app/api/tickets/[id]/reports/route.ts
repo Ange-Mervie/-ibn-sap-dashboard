@@ -1,4 +1,4 @@
-﻿// API comptes rendus d'intervention â€” /api/tickets/[id]/reports
+﻿// API comptes rendus d'intervention — /api/tickets/[id]/reports
 import { and, eq, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
@@ -15,15 +15,15 @@ function isReportStatus(v: unknown): v is (typeof REPORT_STATUSES)[number] {
 
 export async function GET(_req: Request, { params }: Ctx) {
   const session = await getSession();
-  if (!session) return jsonError(401, "Non authentifiÃ©.");
+  if (!session) return jsonError(401, "Non authentifié.");
 
   const { id } = await params;
   const [ticket] = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
   if (!ticket) return jsonError(404, "Ticket introuvable.");
-  if (!canReadTicket(session.role, ticket.assignee, session.email)) return jsonError(403, "AccÃ¨s refusÃ©.");
+  if (!canReadTicket(session.role, ticket.assignee, session.email)) return jsonError(403, "Accès refusé.");
 
   const predicates = [eq(interventionReports.ticketId, id)];
-  if (session.role === "agent") predicates.push(eq(sql`lower(trim(${interventionReports.agentId}))`, session.email.trim().toLowerCase()));
+  if (session.role === "consultant") predicates.push(eq(sql`lower(trim(${interventionReports.agentId}))`, session.email.trim().toLowerCase()));
   const reports = await db
     .select()
     .from(interventionReports)
@@ -34,11 +34,11 @@ export async function GET(_req: Request, { params }: Ctx) {
 
 export async function POST(req: Request, { params }: Ctx) {
   const session = await getSession();
-  if (!session) return jsonError(401, "Non authentifiÃ©.");
+  if (!session) return jsonError(401, "Non authentifié.");
   const { id } = await params;
   const ticket = await db.select().from(tickets).where(eq(tickets.id, id)).limit(1);
   if (!ticket[0]) return jsonError(404, "Ticket introuvable.");
-  if (!canCreateReports(session.role, ticket[0].assignee, session.email)) return jsonError(403, "AccÃ¨s refusÃ©. Votre rÃ´le ou l'affectation ne permet pas de soumettre un rapport.");
+  if (!canCreateReports(session.role, ticket[0].assignee, session.email)) return jsonError(403, "Accès refusé. Votre rôle ou l'affectation ne permet pas de soumettre un rapport.");
 
   let body: unknown;
   try {
@@ -65,17 +65,17 @@ export async function POST(req: Request, { params }: Ctx) {
   const missing: string[] = [];
   if (!interventionDate) missing.push("La date de l'intervention est requise.");
   if (!nature) missing.push("La nature du travail est requise.");
-  if (!description) missing.push("La description du travail rÃ©alisÃ© est requise.");
-  if (!actions) missing.push("Les actions effectuÃ©es sont requises.");
-  if (!result) missing.push("Le rÃ©sultat obtenu est requis.");
-  if (!advancement) missing.push("L'Ã©tat d'avancement est requis.");
+  if (!description) missing.push("La description du travail réalisé est requise.");
+  if (!actions) missing.push("Les actions effectuées sont requises.");
+  if (!result) missing.push("Le résultat obtenu est requis.");
+  if (!advancement) missing.push("L'état d'avancement est requis.");
   if (!remaining) missing.push("Le travail restant est requis.");
-  if (!nextAction) missing.push("La prochaine action prÃ©vue est requise.");
-  if (Number.isNaN(timeSpent) || timeSpent < 0) missing.push("Le temps passÃ© est invalide.");
-  if (missing.length > 0) return jsonError(400, "DonnÃ©es du compte rendu invalides.", missing);
+  if (!nextAction) missing.push("La prochaine action prévue est requise.");
+  if (Number.isNaN(timeSpent) || timeSpent < 0) missing.push("Le temps passé est invalide.");
+  if (missing.length > 0) return jsonError(400, "Données du compte rendu invalides.", missing);
 
-  if (session.role === "agent" && ticket[0].assignee.toLowerCase() !== session.email.toLowerCase()) {
-    return jsonError(403, "AccÃ¨s refusÃ©. Ce ticket n'est pas assignÃ© Ã  cet agent.");
+  if (session.role === "consultant" && ticket[0].assignee.toLowerCase() !== session.email.toLowerCase()) {
+    return jsonError(403, "Accès refusé. Ce ticket n'est pas assigné à ce consultant.");
   }
 
   await db.insert(interventionReports).values({

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const comment = typeof raw.comment === "string" ? raw.comment : "";
 
   if (!ticketId) return jsonError(400, "Le ticket est requis.");
-  if (!agentId) return jsonError(400, "L'agent est requis.");
+  if (!agentId) return jsonError(400, "Le consultant est requis.");
   if (!Number.isInteger(amountPlanned) || amountPlanned < 0) return jsonError(400, "Le montant prévu est invalide.");
   if (!Number.isInteger(amountPaid) || amountPaid < 0) return jsonError(400, "Le montant payé est invalide.");
   if (!(PAYMENT_STATUSES as readonly string[]).includes(paymentStatus)) {

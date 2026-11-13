@@ -1,23 +1,28 @@
-import Image from "next/image";
+import type { ReactNode } from "react";
 
-type SectionHeaderProps = {
+export default function SectionHeader({
+  title,
+  subtitle,
+  action,
+}: {
   title: string;
-  subtitle: string;
-  image?: string;
-};
-
-export default function SectionHeader({ title, subtitle, image }: SectionHeaderProps) {
+  subtitle?: string;
+  action?: ReactNode;
+}) {
   return (
-    <div className="relative mb-8 overflow-hidden rounded-2xl bg-[#0a1f44] shadow-sm">
-      {image ? (
-        <Image src={image} alt="" fill sizes="100vw" className="object-cover" />
-      ) : null}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#060f24]/95 via-[#0a1f44]/80 to-[#0b2545]/70" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />
-      <div className="relative px-6 py-8 sm:px-10 sm:py-12">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">{title}</h2>
-        <p className="mt-2 max-w-xl text-sm text-slate-300">{subtitle}</p>
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2.5">
+          <span className="h-4 w-1 rounded-full bg-[var(--ibn-blue-600)]" aria-hidden />
+          <h2 className="text-[17px] font-semibold tracking-tight text-[var(--ibn-text-strong)]">
+            {title}
+          </h2>
+        </div>
+        {subtitle && (
+          <p className="mt-1 pl-[18px] text-[12.5px] text-[var(--ibn-text-muted)]">{subtitle}</p>
+        )}
       </div>
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }

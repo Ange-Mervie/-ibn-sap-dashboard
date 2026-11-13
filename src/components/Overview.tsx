@@ -100,7 +100,7 @@ export default function Overview({
       .slice(0, 10);
   }, [issues]);
 
-  // Charge de travail par agent (Manager / supervision)
+  // Charge de travail par consultant (Manager / supervision)
   const agentLoad = useMemo(() => {
     const map = new Map<string, { name: string; count: number }>();
     for (const i of issues) {
@@ -123,7 +123,6 @@ export default function Overview({
       <SectionHeader
         title="Vue générale"
         subtitle={`Indicateurs clés calculés à partir des ${total} tickets chargés`}
-        image="/banner/office.jpg"
       />
 
       {/* KPI */}
@@ -142,10 +141,10 @@ export default function Overview({
         />
       </div>
 
-      {/* Charge de travail par agent (Manager) */}
-      <Panel title="Charge de travail par agent" className="mb-6">
+      {/* Charge de travail par consultant (Manager) */}
+      <Panel title="Charge de travail par consultant" className="mb-6">
         {agentLoad.length === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-400">Aucun agent avec des tickets assignés.</p>
+          <p className="py-6 text-center text-sm text-zinc-400">Aucun consultant avec des tickets assignés.</p>
         ) : (
           <div className="space-y-2">
             {agentLoad.map((a) => (

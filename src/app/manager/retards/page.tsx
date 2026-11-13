@@ -18,7 +18,7 @@ export default async function ManagerRetardsPage() {
         <div className="mb-4">
           <h1 className="text-xl font-bold text-zinc-900">Retards et alertes</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Tickets ouverts hors SLA — {alerts.late.length} retardataire(s) · {alerts.criticalLate} critique(s) en retard.
+            Tickets ouverts hors SLA , {alerts.late.length} retardataire(s) · {alerts.criticalLate} critique(s) en retard.
           </p>
         </div>
 

@@ -6,7 +6,9 @@ product
 
 ## Users
 
-Les équipes internes d’IBN Group SARL utilisent l’application depuis un poste de travail pour suivre les incidents SAP et les interventions. Les profils sont ADMIN, MANAGER, AGENT et VIEWER ; l’application exige une authentification.
+Les équipes internes d’IBN Group SARL utilisent l’application depuis un poste de travail pour suivre les
+incidents SAP et les interventions. Les profils sont ADMIN, MANAGER et CONSULTANT ; l’application exige
+une authentification.
 
 ## Product Purpose
 
@@ -28,7 +30,7 @@ Professionnelle, claire et fiable. L’interface doit favoriser une lecture rapi
 - Chaque rôle obtient une hiérarchie, une navigation et des actions conçues pour son travail réel.
 - Distinguer visuellement les listes de travail, les indicateurs, l’activité et les opérations sensibles.
 - Réutiliser les données et services existants ; toute donnée absente reste explicitement indisponible.
-- Faire respecter l’autorisation côté serveur et appliquer le périmètre d’un agent sur les requêtes de données, pas seulement dans le navigateur.
+- Faire respecter l’autorisation côté serveur et appliquer le périmètre d’un consultant sur les requêtes de données, pas seulement dans le navigateur.
 - Préserver les données historiques et la traçabilité lors de chaque évolution.
 
 ## Accessibility & Inclusion

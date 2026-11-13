@@ -3,17 +3,15 @@
 import { useMemo } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Hourglass } from "lucide-react";
 import { isOpen, ageDays } from "@/lib/issues";
-import { Panel } from "./Charts";
 import KpiCard from "./KpiCard";
-import IssueTable from "./IssueTable";
 import SectionHeader from "./SectionHeader";
 import type { HomeProps } from "./homeProps";
 
 const OVERDUE_AFTER_DAYS = 30;
 
-export default function AgentHome(props: HomeProps) {
-  const { user, issues, onReset } = props;
-  const firstName = (user.name || user.email || "Agent").split(" ")[0];
+export default function ConsultantHome(props: HomeProps) {
+  const { user, issues } = props;
+  const firstName = (user.name || user.email || "Consultant").split(" ")[0];
 
   const open = useMemo(() => issues.filter((i) => isOpen(i)), [issues]);
   const urgent = open.filter((i) => i.priority === "Critical" || i.priority === "High");
@@ -34,9 +32,6 @@ export default function AgentHome(props: HomeProps) {
         <KpiCard label="Terminés" value={closed.length} sub="Statut Closed" icon={<CheckCircle2 size={15} />} color="text-green-600" />
         <KpiCard label="En retard" value={overdue.length} sub={`Ouverts de plus de ${OVERDUE_AFTER_DAYS} jours`} icon={<Hourglass size={15} />} color="text-amber-600" />
       </div>
-      <Panel title="Mes tickets">
-        <IssueTable issues={issues} onReset={onReset} filtersActive={false} />
-      </Panel>
     </>
   );
 }

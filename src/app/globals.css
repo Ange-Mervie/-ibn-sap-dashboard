@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* =========================================================
-   Design tokens — IBN GROUP (refonte visuelle)
-   Bleu marine profond · bleu vif · blanc · gris clair · anthracite
+   IBN Group — Design System
+   Bleu marine · bleu vif · gris clair · anthracite
    ========================================================= */
 :root {
   --ibn-navy-950: #060f24;
@@ -14,68 +14,304 @@
   --ibn-blue-100: #dbeafe;
   --ibn-surface: #ffffff;
   --ibn-bg: #f4f6f9;
-  --ibn-border: #e2e8f0;
+  --ibn-border: #e3e8ef;
+  --ibn-border-strong: #cfd8e3;
   --ibn-text: #0f172a;
-  --ibn-text-strong: #1e293b;
-  --ibn-text-muted: #64748b;
-  --ibn-text-faint: #94a3b8;
+  --ibn-text-strong: #111c33;
+  --ibn-text-muted: #52627a;
+  --ibn-text-faint: #64748b;
   --ibn-green: #16a34a;
   --ibn-orange: #ea7c1c;
   --ibn-red: #dc2626;
   --ibn-amber: #f59e0b;
-  --ibn-radius: 12px;
-  --ibn-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --ibn-shadow-md: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --ibn-radius: 14px;
+  --ibn-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --ibn-shadow-md: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
+  --ibn-sidebar: 260px;
 }
 
-/* =========================================================
-   Bande d'images défilante (le "carrousel" en haut de page)
-   Modifier la durée pour changer la vitesse
-   ========================================================= */
-@keyframes banner-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+@theme inline {
+  --color-navy-950: var(--ibn-navy-950);
+  --color-navy-900: var(--ibn-navy-900);
+  --color-navy-800: var(--ibn-navy-800);
+  --color-brand-700: var(--ibn-blue-700);
+  --color-brand-600: var(--ibn-blue-600);
+  --color-brand-500: var(--ibn-blue-500);
+  --color-brand-100: var(--ibn-blue-100);
+  --color-ibn-bg: var(--ibn-bg);
+  --color-ibn-border: var(--ibn-border);
+  --color-ibn-ink: var(--ibn-text);
+  --color-ibn-muted: var(--ibn-text-muted);
 }
 
-.banner-track {
+* {
+  border-color: var(--ibn-border);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--ibn-bg);
+  color: var(--ibn-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--ibn-blue-100);
+  color: var(--ibn-navy-900);
+}
+
+/* ---------- Surfaces ---------- */
+@layer components {
+.ibn-card {
+  background: var(--ibn-surface);
+  border: 1px solid var(--ibn-border);
+  border-radius: var(--ibn-radius);
+  box-shadow: var(--ibn-shadow-sm);
+}
+
+.ibn-card-header {
   display: flex;
-  gap: 1rem;
-  width: max-content;
-  animation: banner-scroll 40s linear infinite;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eef2f7;
 }
 
-.banner-track:hover {
-  animation-play-state: paused;
+.ibn-card-title {
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ibn-text-strong);
 }
 
-/* =========================================================
-   Fond discret de la page (texture très légère)
-   ========================================================= */
-.page-bg {
-  background-color: #f4f6f9;
-  background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
-  background-size: 24px 24px;
+.ibn-card-subtitle {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ibn-text-faint);
 }
 
-/* =========================================================
-   Scrollbar discrète pour le tableau
-   ========================================================= */
+.ibn-card-body {
+  padding: 20px;
+}
+
+/* ---------- Form controls ---------- */
+.ibn-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ibn-text-muted);
+}
+
+.ibn-input,
+.ibn-select {
+  width: 100%;
+  border: 1px solid var(--ibn-border-strong);
+  border-radius: 10px;
+  background: #fff;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: var(--ibn-text);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.ibn-input::placeholder {
+  color: #9aa8ba;
+}
+
+.ibn-input:focus,
+.ibn-select:focus {
+  border-color: var(--ibn-blue-500);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.ibn-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6b82' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 34px;
+}
+
+/* ---------- Buttons ---------- */
+.ibn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--ibn-border-strong);
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px 13px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ibn-text-strong);
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+  white-space: nowrap;
+}
+
+.ibn-btn:hover {
+  background: #f8fafc;
+  border-color: var(--ibn-border-strong);
+}
+
+.ibn-btn:focus-visible {
+  outline: 2px solid var(--ibn-blue-500);
+  outline-offset: 2px;
+}
+
+.ibn-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ibn-btn-primary {
+  background: var(--ibn-blue-600);
+  border-color: var(--ibn-blue-600);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25);
+}
+
+.ibn-btn-primary:hover {
+  background: var(--ibn-blue-700);
+  border-color: var(--ibn-blue-700);
+}
+
+.ibn-btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ibn-text-muted);
+}
+
+.ibn-btn-ghost:hover {
+  background: #eef2f7;
+  color: var(--ibn-text);
+}
+
+/* ---------- Badges ---------- */
+.ibn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+/* ---------- Navigation ---------- */
+.ibn-nav-group {
+  padding: 0 12px;
+  margin: 18px 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.ibn-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 10px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.68);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.ibn-nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.ibn-nav-link[data-active="true"] {
+  background: rgba(59, 130, 246, 0.18);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.18);
+}
+
+.ibn-nav-link[data-active="true"] svg {
+  color: #93c5fd;
+}
+
+/* ---------- Hero ---------- */
+.ibn-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--ibn-navy-900);
+  color: #fff;
+}
+
+.ibn-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(6, 15, 36, 0.97) 0%, rgba(10, 31, 68, 0.92) 55%, rgba(10, 31, 68, 0.55) 100%);
+}
+
+/* ---------- Table ---------- */
+.table-scroll {
+  overflow-x: auto;
+}
+
 .table-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-.table-scroll::-webkit-scrollbar-thumb {
-  background: #a1a1aa;
-  border-radius: 3px;
+  height: 8px;
+  width: 8px;
 }
 
-/* =========================================================
-   Graphiques interactifs (type Power BI) : curseur pointeur
-   sur les éléments cliquables (légendes, secteurs, barres)
-   ========================================================= */
+.table-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.ibn-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--ibn-border);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ibn-text-muted);
+  white-space: nowrap;
+}
+
+.ibn-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  color: var(--ibn-text);
+  vertical-align: middle;
+}
+
+.ibn-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.ibn-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- Charts ---------- */
 .chart-clickable .recharts-sector,
 .chart-clickable .recharts-bar-rectangle,
 .chart-clickable .recharts-legend-item {
@@ -85,22 +321,21 @@
 .chart-clickable [data-cat] {
   cursor: pointer;
 }
-
-/* =========================================================
-   Cartes IBN — surfaces blanches, bordures douces, ombres subtiles
-   ========================================================= */
-.ibn-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
-.ibn-card-header {
-  border-bottom: 1px solid #f1f5f9;
-  padding: 14px 20px;
+.recharts-cartesian-axis-tick-value {
+  font-size: 11px;
+  fill: var(--ibn-text-muted);
 }
 
-.ibn-card-body {
-  padding: 20px;
+/* ---------- Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

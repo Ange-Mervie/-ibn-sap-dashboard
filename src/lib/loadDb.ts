@@ -1,12 +1,8 @@
-// Loader MySQL via Drizzle — même shape IssueData que le lecteur Excel.
-// Utilisé par la page d'accueil ; l'Excel reste pour l'import (scripts/db:import).
-import fs from "fs";
-import path from "path";
+// Loader MySQL via Drizzle — source unique des tickets (base ibn_dashboard).
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { tickets } from "@/db/schema";
 import { isOpen, todayISO, STATUSES, type Issue, type IssueData } from "./issues";
-import { readExcelIssues } from "./loadIssues";
 import { type WorkspaceRole } from "./access";
 
 // Date MySQL "YYYY-MM-DD" ou Timestamp → "YYYY-MM-DD" ("" si absent)
@@ -20,7 +16,7 @@ function iso(d: Date | string | null): string {
 export type WorkspaceSession = { role: WorkspaceRole; email: string };
 
 export async function loadIssueDataFromDb(session?: WorkspaceSession): Promise<IssueData> {
-  const where = session?.role === "agent"
+  const where = session?.role === "consultant"
     ? and(eq(sql`lower(trim(${tickets.assignee}))`, session.email.trim().toLowerCase()))
     : undefined;
   const rows = await db.select().from(tickets).where(where).orderBy(tickets.id);
@@ -113,22 +109,6 @@ export async function loadIssueDataFromDb(session?: WorkspaceSession): Promise<I
     ok: invDates === 0,
     detail: invDates === 0 ? "Conformes" : `${invDates} incohérent(s)`,
   });
-
-  // Fidélité de l'import : tout le classeur est-il repris en base ?
-  const excelPath = path.join(process.cwd(), "data", "IBN-SAP SUPPORT-Issue-Tracking-SCDP UPDATED.xlsx");
-  if (fs.existsSync(excelPath)) {
-    const excelIds = readExcelIssues().issues.map((i) => i.id);
-    const baseIds = new Set(ids);
-    const missing = excelIds.filter((id) => !baseIds.has(id)).length;
-    controls.push({
-      label: "Import Excel fidèle",
-      ok: missing === 0,
-      detail:
-        missing === 0
-          ? `Base ${issues.length} tickets`
-          : `${missing} ticket(s) Excel absent(s) — relancer npm run db:import`,
-    });
-  }
 
   const dates: string[] = [];
   for (const i of issues) {

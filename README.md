@@ -7,14 +7,13 @@ Application web de suivi des incidents SAP pour **IBN Group SARL** (Next.js 16, 
 - Tableaux de bord et espaces dédiés par rôle (supervision, suivi tickets, rapports, paiements, etc.).
 - Gestion des tickets SAP (création, consultation, mise à jour, commentaires, historique), rapports d’intervention, évaluations et paiements.
 - Filtrage global combinable (statut/priorité/module/paiement/période), graphiques et indicateurs calculés à partir des données.
-- Import/contrôle des données Excel vers MySQL + contrôles qualité.
+- Contrôles qualité sur les tickets enregistrés en base MySQL.
 - Intégration Gmail (préparée/configurable) pour synchronisation/staging de messages.
 - **Internationalisation FR/EN** : sélecteur de langue (FR | EN) sur la page de connexion et dans l’en-tête/session, préférence persistée par cookie (`ibn_locale`), `lang` HTML dynamique.
 
 ## Prérequis
 - Node.js `>= 22.12.0` et npm `>= 10`
 - MySQL 8.x (base `ibn_dashboard` ou via `DATABASE_URL`)
-- Accès au fichier Excel source si import nécessaire (`data/IBN-SAP SUPPORT-Issue-Tracking-SCDP UPDATED.xlsx`)
 
 ## Installation
 ```bash
@@ -32,7 +31,6 @@ Variables importantes (`.env.example`) :
 ```bash
 npm run db:generate   # générer migrations Drizzle
 npm run db:migrate    # appliquer migrations
-npm run db:import     # importer le classeur Excel vers MySQL
 npm run db:check      # contrôle cohérence base
 ```
 

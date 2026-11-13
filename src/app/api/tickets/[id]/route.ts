@@ -28,7 +28,7 @@ export async function GET(_req: Request, { params }: Ctx) {
     return jsonError(404, `Ticket introuvable : ${id}`);
   }
   if (!canReadTicket(session.role, ticket.assignee, session.email)) {
-    return jsonError(403, "Accès refusé. Ce ticket n'est pas assigné à cet agent.");
+    return jsonError(403, "Accès refusé. Ce ticket n'est pas assigné à ce consultant.");
   }
 
   const events = await db

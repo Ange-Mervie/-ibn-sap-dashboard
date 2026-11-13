@@ -94,13 +94,13 @@ export default function ManagerInterventionsPage() {
       <div className="mx-auto max-w-[1500px] px-4 py-6">
         <div className="mb-4">
           <h1 className="text-xl font-bold text-zinc-900">Suivi des interventions</h1>
-          <p className="mt-1 text-sm text-zinc-500">Comptes rendus d&apos;intervention — validation ou rejet par le manager.</p>
+          <p className="mt-1 text-sm text-zinc-500">Comptes rendus d&apos;intervention , validation ou rejet par le manager.</p>
         </div>
         {error ? <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
 
         <div className="mb-4 max-w-md">
           <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm">
-            <option value="">— Choisir un ticket —</option>
+            <option value=""> Choisir un ticket </option>
             {tickets.map((t) => (
               <option key={t.id} value={t.id}>{t.id} — {t.description.slice(0, 60)}</option>
             ))}

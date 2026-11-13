@@ -32,7 +32,7 @@ export default async function EmailsPage() {
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Gmail — candidats d&apos;incident</h1>
+          <h1 className="text-xl font-bold text-zinc-900">Gmail  candidats d&apos;incident</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Synchronisation Gmail → staging. La création de ticket reste une action humaine.
           </p>
@@ -48,7 +48,7 @@ export default async function EmailsPage() {
 
       <SyncControls configured={status.configured} lastSync={last} accessToken={token?.accessToken ?? undefined} />
 
-      <EmailCandidates messages={pending} canCreateTicket={session.role === "admin" || session.role === "agent"} />
+      <EmailCandidates messages={pending} canCreateTicket={session.role === "admin" || session.role === "consultant"} />
     </main>
   );
 }

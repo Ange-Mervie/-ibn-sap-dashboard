@@ -18,26 +18,26 @@ function assert(condition: boolean, message: string): void {
   }
 }
 
-const roles: WorkspaceRole[] = ["admin", "manager", "agent"];
+const roles: WorkspaceRole[] = ["admin", "manager", "consultant"];
 
 assert(canManageUsers("admin"), "ADMIN peut gérer les utilisateurs");
 assert(!canManageUsers("manager"), "MANAGER ne gère pas les utilisateurs");
-assert(!canManageUsers("agent"), "AGENT ne gère pas les utilisateurs");
+assert(!canManageUsers("consultant"), "CONSULTANT ne gère pas les utilisateurs");
 
 assert(canWriteTickets("admin", "", "admin@example.test"), "ADMIN peut écrire sur les tickets");
 assert(canWriteTickets("manager", "", "manager@example.test"), "MANAGER peut superviser et modifier les tickets");
-assert(canWriteTickets("agent", "agent@example.test", "agent@example.test"), "AGENT peut modifier son ticket assigné");
-assert(!canWriteTickets("agent", "other@example.test", "agent@example.test"), "AGENT ne modifie pas un ticket assigné à autrui");
-assert(!canWriteTickets("agent", "", "agent@example.test"), "AGENT ne modifie pas un ticket non assigné");
+assert(canWriteTickets("consultant", "agent@example.test", "agent@example.test"), "CONSULTANT peut modifier son ticket assigné");
+assert(!canWriteTickets("consultant", "other@example.test", "agent@example.test"), "CONSULTANT ne modifie pas un ticket assigné à autrui");
+assert(!canWriteTickets("consultant", "", "agent@example.test"), "CONSULTANT ne modifie pas un ticket non assigné");
 assert(canReadTicket("admin", "other@example.test", "admin@example.test"), "ADMIN lit tous les tickets");
 assert(canReadTicket("manager", "other@example.test", "manager@example.test"), "MANAGER consulte les tickets");
-assert(canReadTicket("agent", " Agent@Example.test ", "agent@example.test"), "AGENT consulte son ticket assigné");
-assert(!canReadTicket("agent", "other@example.test", "agent@example.test"), "AGENT ne consulte pas le ticket d’autrui");
-assert(canWriteComments("agent", "agent@example.test", "agent@example.test"), "AGENT commente son ticket");
-assert(!canWriteComments("agent", "other@example.test", "agent@example.test"), "AGENT ne commente pas un ticket d’autrui");
+assert(canReadTicket("consultant", " Agent@Example.test ", "agent@example.test"), "CONSULTANT consulte son ticket assigné");
+assert(!canReadTicket("consultant", "other@example.test", "agent@example.test"), "CONSULTANT ne consulte pas le ticket d’autrui");
+assert(canWriteComments("consultant", "agent@example.test", "agent@example.test"), "CONSULTANT commente son ticket");
+assert(!canWriteComments("consultant", "other@example.test", "agent@example.test"), "CONSULTANT ne commente pas un ticket d’autrui");
 assert(canCreateReports("admin", "", "admin@example.test"), "ADMIN crée un rapport");
-assert(canCreateReports("agent", "agent@example.test", "agent@example.test"), "AGENT crée le rapport de son ticket assigné");
-assert(!canCreateReports("agent", "other@example.test", "agent@example.test"), "AGENT ne crée pas de rapport pour autrui");
+assert(canCreateReports("consultant", "agent@example.test", "agent@example.test"), "CONSULTANT crée le rapport de son ticket assigné");
+assert(!canCreateReports("consultant", "other@example.test", "agent@example.test"), "CONSULTANT ne crée pas de rapport pour autrui");
 assert(!canCreateReports("manager", "", "manager@example.test"), "MANAGER ne soumet pas le rapport d’un agent");
 
 assert(sameIdentity(" Agent@Example.test ", "agent@example.test"), "Identités normalisées à la casse/espaces");
@@ -46,17 +46,17 @@ assert(!sameIdentity(null, "agent@example.test"), "Identité absente refusée");
 
 assert(canReadReports("admin", "draft", "other@example.test", "admin@example.test"), "ADMIN peut lire tous les rapports du périmètre autorisé");
 assert(canReadReports("manager", "submitted", "agent@example.test", "manager@example.test"), "MANAGER peut lire les rapports soumis");
-assert(canReadReports("agent", "draft", " Agent@Example.test ", "agent@example.test"), "AGENT lit ses rapports");
-assert(!canReadReports("agent", "draft", "other@example.test", "agent@example.test"), "AGENT ne lit pas le rapport d’autrui");
+assert(canReadReports("consultant", "draft", " Agent@Example.test ", "agent@example.test"), "CONSULTANT lit ses rapports");
+assert(!canReadReports("consultant", "draft", "other@example.test", "agent@example.test"), "CONSULTANT ne lit pas le rapport d’autrui");
 
 assert(canReadEvaluations("admin", "agent@example.test", "admin@example.test"), "ADMIN lit les évaluations");
 assert(canReadEvaluations("manager", "agent@example.test", "manager@example.test"), "MANAGER lit les évaluations");
-assert(canReadEvaluations("agent", " Agent@Example.test ", "agent@example.test"), "AGENT lit ses évaluations");
-assert(!canReadEvaluations("agent", "other@example.test", "agent@example.test"), "AGENT ne lit pas les évaluations d’autrui");
+assert(canReadEvaluations("consultant", " Agent@Example.test ", "agent@example.test"), "CONSULTANT lit ses évaluations");
+assert(!canReadEvaluations("consultant", "other@example.test", "agent@example.test"), "CONSULTANT ne lit pas les évaluations d’autrui");
 
 assert(canReadPayments("admin"), "ADMIN accède aux paiements");
 assert(canReadPayments("manager"), "MANAGER accède aux paiements autorisés");
-assert(!canReadPayments("agent"), "AGENT n’accède pas aux paiements dans cette version");
+assert(!canReadPayments("consultant"), "CONSULTANT n’accède pas aux paiements dans cette version");
 
 assert(roles.length === 3, "Les trois rôles sont couverts");
 

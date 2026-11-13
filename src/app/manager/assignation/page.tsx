@@ -86,7 +86,7 @@ export default function ManagerAssignationPage() {
       <div className="mx-auto max-w-[1500px] px-4 py-6">
         <div className="mb-4">
           <h1 className="text-xl font-bold text-zinc-900">Affectation des tickets</h1>
-          <p className="mt-1 text-sm text-zinc-500">Tickets en attente ou déjà affectés — sélectionnez un agent pour affecter.</p>
+          <p className="mt-1 text-sm text-zinc-500">Tickets en attente ou déjà affectés , sélectionnez un consultant pour affecter.</p>
         </div>
         {error ? <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
 
@@ -122,7 +122,7 @@ export default function ManagerAssignationPage() {
                         onChange={(e) => setSelectedAgent((s) => ({ ...s, [t.id]: e.target.value }))}
                         className="rounded-md border border-zinc-300 px-2 py-1.5 text-sm"
                       >
-                        <option value="">{t.assignee ? "Changer d&apos;agent…" : "Choisir un agent…"}</option>
+                        <option value="">{t.assignee ? "Changer de consultant…" : "Choisir un consultant…"}</option>
                         {agents.map((a) => (
                           <option key={a.id} value={a.email}>{a.name} ({a.email})</option>
                         ))}

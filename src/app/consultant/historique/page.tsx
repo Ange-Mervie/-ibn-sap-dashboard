@@ -6,7 +6,7 @@ export const instant = false;
 
 export default async function Page() {
   const session = await getSession();
-  if (!session) return <p>Non authentifiÃ©</p>;
+  if (!session) return <p>Non authentifié</p>;
   const events = await db.select().from(ticketEvents);
   const mine = events.filter((e) => e.changedBy === session.name);
   return (

@@ -213,6 +213,6 @@ export function canManage(role: Role | undefined): boolean {
 
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrateur",
-  agent: "Agent",
+  consultant: "Consultant",
   manager: "Manager",
 };

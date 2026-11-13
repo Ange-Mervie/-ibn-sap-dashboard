@@ -9,7 +9,6 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:import": "tsx scripts/import-excel.ts",
     "db:check": "tsx scripts/check-db.ts",
     "check:gmail": "tsx scripts/check-gmail.ts",
     "check:security": "tsx scripts/check-security.ts"
@@ -23,8 +22,7 @@
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "recharts": "^3.10.1",
-    "xlsx": "^0.18.5"
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

@@ -33,7 +33,7 @@ export default function Analysis({
   role?: string;
 }) {
   const isManager = role === "manager";
-  const isAgent = role === "agent";
+  const isConsultant = role === "consultant";
   const open = useMemo(() => issues.filter(isOpen), [issues]);
   const closed = useMemo(() => issues.filter((i) => !isOpen(i)), [issues]);
 
@@ -197,7 +197,6 @@ export default function Analysis({
       <SectionHeader
         title="Analyse et performance"
         subtitle="Délais, ancienneté, paiement et points d'attention justifiés par des règles explicites"
-        image="/banner/data.jpg"
       />
 
       {/* KPI secondaires */}
@@ -335,18 +334,18 @@ export default function Analysis({
           <Panel title="Ancienneté des incidents (récents / à surveiller / en retard)">
             <CountBars data={managerAgeing} color="#2563eb" />
           </Panel>
-          <Panel title="Tickets en cours par agent responsable">
+          <Panel title="Tickets en cours par consultant responsable">
             <HorizontalBars data={managerByAgent} color="#2563eb" />
           </Panel>
         </div>
       ) : null}
 
-      {isAgent ? (
+      {isConsultant ? (
         <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Panel title="Mes tickets par statut">
             <StatusPie data={agentByStatus} />
           </Panel>
-          <Panel title="Mes interventions rÃ©alisÃ©es par pÃ©riode">
+          <Panel title="Mes interventions réalisées par période">
             <CountBars data={agentMonthlyClosed} color="#2563eb" />
           </Panel>
         </div>

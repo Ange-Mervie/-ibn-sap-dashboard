@@ -17,7 +17,7 @@ export type Action =
 type Ticket = typeof tickets.$inferSelect;
 
 export function scopeWhere(user: User) {
-  if (user.role === "agent") return eq(tickets.assignee, user.email);
+  if (user.role === "consultant") return eq(tickets.assignee, user.email);
   return undefined;
 }
 
@@ -25,7 +25,7 @@ export function can(user: User, action: Action, ticket?: Ticket): boolean {
   const role = user.role;
   switch (action) {
     case "ticket.read":
-      if (role === "agent") return !!ticket && ticket.assignee.toLowerCase() === user.email.toLowerCase();
+      if (role === "consultant") return !!ticket && ticket.assignee.toLowerCase() === user.email.toLowerCase();
       return role === "admin" || role === "manager";
     case "ticket.create":
       return role === "admin" || role === "manager";
@@ -34,14 +34,14 @@ export function can(user: User, action: Action, ticket?: Ticket): boolean {
       return role === "admin" || role === "manager";
     case "ticket.status":
       if (role === "admin" || role === "manager") return true;
-      return !!ticket && role === "agent" && ticket.assignee.toLowerCase() === user.email.toLowerCase();
+      return !!ticket && role === "consultant" && ticket.assignee.toLowerCase() === user.email.toLowerCase();
     case "ticket.comment":
       if (role === "admin" || role === "manager") return true;
-      if (role === "agent") return !!ticket && ticket.assignee.toLowerCase() === user.email.toLowerCase();
+      if (role === "consultant") return !!ticket && ticket.assignee.toLowerCase() === user.email.toLowerCase();
       return false;
     case "dashboard.view":
     case "export.csv":
-      return role === "admin" || role === "manager" || role === "agent";
+      return role === "admin" || role === "manager" || role === "consultant";
     case "import.excel":
     case "users.manage":
       return role === "admin";

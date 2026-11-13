@@ -6,14 +6,14 @@ import { redirect } from "next/navigation";
 
 export const instant = false;
 
-export default async function ManagerAgentsPage() {
+export default async function ManagerConsultantsPage() {
   const session = await getSession();
-  if (!session) redirect("/login?from=%2Fmanager%2Fagents");
+  if (!session) redirect("/login?from=%2Fmanager%2Fconsultants");
 
   const agents = await db
     .select({ id: users.id, name: users.name, email: users.email, active: users.active })
     .from(users)
-    .where(eq(users.role, "agent"))
+    .where(eq(users.role, "consultant"))
     .orderBy(users.name);
 
   const ticketsAll = await db.select().from(tickets);
@@ -29,8 +29,8 @@ export default async function ManagerAgentsPage() {
     <div className="min-h-screen bg-zinc-50">
       <div className="mx-auto max-w-[1500px] px-4 py-6">
         <div className="mb-4">
-          <h1 className="text-xl font-bold text-zinc-900">Suivi des agents</h1>
-          <p className="mt-1 text-sm text-zinc-500">Liste des agents et de leur charge de travail.</p>
+          <h1 className="text-xl font-bold text-zinc-900">Suivi des consultants</h1>
+          <p className="mt-1 text-sm text-zinc-500">Liste des consultants et de leur charge de travail.</p>
         </div>
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
           <table className="w-full text-sm">
@@ -45,7 +45,7 @@ export default async function ManagerAgentsPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {agents.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-12 text-center text-sm text-zinc-500">Aucun agent.</td></tr>
+                <tr><td colSpan={5} className="px-4 py-12 text-center text-sm text-zinc-500">Aucun consultant.</td></tr>
               )}
               {agents.map((a) => (
                 <tr key={a.id} className="border-t">
