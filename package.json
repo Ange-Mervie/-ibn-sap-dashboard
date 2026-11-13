@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
     "db:check": "tsx scripts/check-db.ts",
     "check:gmail": "tsx scripts/check-gmail.ts",
     "check:security": "tsx scripts/check-security.ts"

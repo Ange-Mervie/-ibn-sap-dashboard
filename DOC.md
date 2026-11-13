@@ -268,39 +268,41 @@ Phase 1 — évolution du dashboard vers une application de gestion de tickets :
 
 ---
 
-## 13. Refonte professionnelle — espaces ADMIN / MANAGER / AGENT / VIEWER
+## 13. Refonte professionnelle — espaces ADMIN / MANAGER / CONSULTANT
 
-Mission : « REFONTE PROFESSIONNELLE DU DASHBOARD SAP — GESTION DES INCIDENTS, ACTIVITÉS ET PERFORMANCES ».
+### 13.1 Identité visuelle
 
-### 13.1 Nouvelle identité visuelle des espaces
+- **Sidebar navy fixe** (`src/components/Sidebar.tsx`) avec navigation par rôle.
+- **Topbar sticky** + **hero photo** (`src/components/Banner.tsx`) + galerie d'images.
+- **Cartes unifiées** (`ibn-card`), tableau de suivi redesigné, login en split-screen.
+- Design sobre : bleu marine `#0A1F44`, bleu `#2563EB`, gris clairs, badges de statut.
 
-- **Barre latérale fixe** (`src/components/Sidebar.tsx`) avec navigation **par rôle**.
-- **Espaces distincts** rendus selon le rôle connecté (`src/components/Dashboard.tsx`) :
-  - **Admin** (`AdminHome.tsx`) : vue globale — KPI, graphiques, **dernières activités**.
-  - **Manager** (`ManagerHome.tsx`) : supervision — tickets à affecter, critiques, en retard, charge de travail par agent.
-  - **Agent** (`AgentHome.tsx`) : espace personnel — salutation, KPIs métier, « Mes tickets ».
-  - **Viewer** (`ViewerHome.tsx`) : consultation seule — incidents, répartitions, évolution.
-- Design : bleu professionnel, surfaces blanches / gris clair, badges couleurs, KPI modernes, graphiques avec légendes, tableaux lisibles, formulaires structurés.
+### 13.2 Espaces par rôle
 
-### 13.2 Modules fonctionnels livrés
-
-- **Compte rendu d'intervention** (`/api/tickets/[id]/reports`, `ReportForm`) — statut `submitted`.
-- **Évaluation travail** (`/api/evaluations`, `EvaluationForm`) — décision `validated | to_correct | rejected`.
-- **Suivi paiements** (`/api/payments`, `PaymentForm`) — statut `validationStatus`, balance `max(0, planned - paid)`.
+- **Admin** (`AdminHome.tsx`) : vue globale — KPI, graphiques, activités récentes.
+- **Manager** (`ManagerHome.tsx`) : supervision — affectations, critiques, retards, charge.
+- **Consultant** (`ConsultantHome.tsx`) : espace personnel — KPI, tickets assignés.
+- Le rôle `viewer` a été supprimé ; le rôle `agent` a été renommé `consultant`.
 
 ### 13.3 Authentification / RBAC
 
-- `src/lib/auth.ts` : scrypt + JWT (HS256, cookie `ibn_session`, 8 h), rôles `admin | manager | agent | viewer`.
-- `src/proxy.ts` : routes protégées (`WRITE_APIS`, `PROTECTED_PAGES`), décodage JWT côté proxy.
-- Espace Manager peut désormais gérer (assigner / modifier) les tickets ; l'Espace Viewer est en **lecture seule**.
+- `src/lib/auth.ts` : scrypt + JWT (HS256, cookie `ibn_session`, 8 h), rôles `admin | manager | consultant`.
+- `src/proxy.ts` : routes protégées (`WRITE_APIS`, `PROTECTED_PAGES`, dont `/consultant`).
 
-### 13.4 Vérifications finales
+### 13.4 Migration de la base existante
 
-- `npx tsc --noEmit` : 0 erreur · `npm run lint` : 0 erreur · `npm run build` : OK
-- `node scripts/e2e-test.mjs` : **60/60 tests réussis**
-- `npx tsx scripts/check-db.ts`, `check-sla.ts`, `check-metrics.ts`, `check-gmail.ts`, `check-security.ts` : OK
+```sql
+ALTER TABLE `users` MODIFY COLUMN `role`
+  enum('admin','agent','viewer','consultant','manager') NOT NULL DEFAULT 'agent';
+UPDATE `users` SET `role` = 'consultant' WHERE `role` = 'agent';
+DELETE FROM `users` WHERE `role` = 'viewer';
+ALTER TABLE `users` MODIFY COLUMN `role`
+  enum('admin','consultant','manager') NOT NULL DEFAULT 'consultant';
+```
 
-### 13.5 État
+### 13.5 Vérifications
 
-- HEAD : `79f5b05` — refonte visuelle des 4 espaces (Admin / Manager / Agent / Viewer).
-- Base MySQL conservée : 98 tickets, 0 résidu, utilisateurs intacts.
+- `npx tsc --noEmit` : 0 erreur · `npm run lint` : 0 erreur · `npm run build` : OK (44 pages)
+- `check-db` : 99 tickets · `check-access` : OK · `check-security` : OK
+- Responsive : 0 débordement à 390 / 768 / 1024 / 1440 px.
+- Commit : `54f20c3`.

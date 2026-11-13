@@ -69,5 +69,20 @@ npm run check:gmail
 - La préférence est stockée dans le cookie `ibn_locale` et appliquée au rendu (`<html lang="...">`).
 
 ## Déploiement
-- Docker : `Dockerfile`, `docker-compose.yml` fournis.
-- Configurer les variables d’environnement (`DATABASE_URL`, `SESSION_SECRET`, `GMAIL_*` si utilisé) dans l’environnement cible.
+
+Prérequis : Node.js ≥ 22.12, MySQL 8, un reverse proxy HTTPS (nginx/Caddy/Traefik).
+
+1. Renseigner `.env.local` (ou les variables de l'environnement) :
+   - `DATABASE_URL` (base MySQL dédiée, ex. `ibn_dashboard`)
+   - `SESSION_SECRET` (32 caractères aléatoires minimum)
+   - `GMAIL_*` et rediriger `GMAIL_REDIRECT_URI` vers `https://VOTRE_DOMAINE/api/gmail/callback`
+2. Créer le schéma sur une base vide : `npm run db:push`.
+   - Depuis une base existante, migrer les rôles : `agent` → `consultant` et supprimer `viewer`
+     (voir `DOC.md`, section Base de données).
+3. Installer et builder : `npm ci && npm run build`.
+4. Démarrer : `npm start` (port 3000) ou `docker compose up -d --build`.
+5. Vérifier : `/login` (200), une page protégée ( redirection 307), `/api/tickets` (401).
+6. Créer/élever un compte administrateur via `/admin` ou `npx tsx scripts/create-admin.ts`.
+
+> Le conteneur `app` n'exécute pas les migrations : le schéma doit exister avant le démarrage.
+> La base `ibn_dashboard_test` de `docker-compose.yml` est un exemple ; utilisez `ibn_dashboard` en production.
