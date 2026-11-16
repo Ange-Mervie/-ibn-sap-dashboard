@@ -1,11 +1,12 @@
 services:
   db:
     image: mysql:8.3
+    restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ibn_dashboard_test
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ibn_dashboard
       MYSQL_USER: ibn_app
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -14,21 +15,44 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 30s
-  app:
-    build: .
-    ports:
-      - "3000:3000"
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    restart: "no"
     environment:
-      DATABASE_URL: mysql://ibn_app:${MYSQL_PASSWORD}@db:3306/ibn_dashboard_test
-      SESSION_SECRET: ${SESSION_SECRET}
+      DATABASE_URL: mysql://ibn_app:${MYSQL_PASSWORD}@db:3306/ibn_dashboard
     depends_on:
       db:
         condition: service_healthy
         required: true
-    networks:
-      default: null
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: mysql://ibn_app:${MYSQL_PASSWORD}@db:3306/ibn_dashboard
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
+      NEXT_TELEMETRY_DISABLED: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+        required: true
+      migrate:
+        condition: service_completed_successfully
+        required: true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/login"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 volumes:
   db_data:
     name: ibn-sap-dashboard_db_data

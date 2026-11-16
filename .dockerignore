@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.github
+coverage
+backups
+data
+.env
+.env.local
+.env*.local
+*.log
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+DOC.md
+PRODUCT.md
