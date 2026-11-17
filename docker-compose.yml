@@ -5,14 +5,14 @@ services:
     environment:
       MYSQL_DATABASE: ibn_dashboard
       MYSQL_USER: ibn_app
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-Ibn!Local2026Test}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Root!Ibn2026Test}
     ports:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-Root!Ibn2026Test}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -24,7 +24,7 @@ services:
       target: migrator
     restart: "no"
     environment:
-      DATABASE_URL: mysql://ibn_app:${MYSQL_PASSWORD}@db:3306/ibn_dashboard
+      DATABASE_URL: mysql://ibn_app:${MYSQL_PASSWORD:-Ibn!Local2026Test}@db:3306/ibn_dashboard
     depends_on:
       db:
         condition: service_healthy
@@ -36,8 +36,8 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
-      DATABASE_URL: mysql://ibn_app:${MYSQL_PASSWORD}@db:3306/ibn_dashboard
-      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
+      DATABASE_URL: mysql://ibn_app:${MYSQL_PASSWORD:-Ibn!Local2026Test}@db:3306/ibn_dashboard
+      SESSION_SECRET: ${SESSION_SECRET:-ibn_local_dev_session_secret_0123456789abcdef}
       NEXT_TELEMETRY_DISABLED: "1"
     depends_on:
       db:
