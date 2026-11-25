@@ -51,7 +51,7 @@ export default async function LoginPage({
           </div>
         </div>
 
-        <p className="relative z-10 text-[11px] text-blue-200/40">© {new Date().getFullYear()} IBN Group SARL</p>
+        <p className="relative z-10 text-[11px] text-blue-200/40">© 2025 IBN Group SARL</p>
       </aside>
 
       <section className="relative flex items-center justify-center bg-white px-5 py-12 sm:px-10">
