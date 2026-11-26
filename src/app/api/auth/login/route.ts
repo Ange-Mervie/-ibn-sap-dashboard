@@ -62,6 +62,9 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
-    return jsonError(500, `Erreur d'authentification : ${err instanceof Error ? err.message : "erreur inconnue"}`);
+    const cause = err instanceof Error
+      ? (err.cause instanceof Error ? err.cause.message : err.message)
+      : "erreur inconnue";
+    return jsonError(500, `Erreur d'authentification : ${cause}`);
   }
 }
